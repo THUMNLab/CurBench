@@ -21,7 +21,10 @@ cd CurBench
 # 2. pip install local module: curbench
 pip install -e .
 
-# 3. run the example code
+# 3. prepare dataset
+mkdir data
+
+# 4. run the example code
 python examples/base.py
 ```
 

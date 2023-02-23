@@ -2,7 +2,6 @@ from .utils import Cutout
 
 from .cifar10 import get_cifar10_dataset
 from .cifar100 import get_cifar100_dataset
-# TODO: other text  datasets like ptb, wikitext, etc.
 
 
 data_dict = {
