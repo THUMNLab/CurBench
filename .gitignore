@@ -1,0 +1,13 @@
+.vscode
+.DS_Store
+__pycache__
+
+/*.egg-info
+/data
+/runs*
+/old*
+
+*.log
+*.txt
+run.sh
+test.py
