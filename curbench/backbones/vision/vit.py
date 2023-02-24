@@ -154,8 +154,8 @@ class Head(nn.Sequential):
 
 
 class RelViT(nn.Sequential):
-    def __init__(self, num_classes, image_size, channels, head_channels, num_blocks, patch_size,
-                 in_channels=3, emb_p_drop=0., trans_p_drop=0., head_p_drop=0.):
+    def __init__(self, num_classes, image_size=32, channels=256, head_channels=32, num_blocks=8, patch_size=2,
+                 in_channels=3, emb_p_drop=0., trans_p_drop=0., head_p_drop=0.3):
         reduced_size = image_size // patch_size
         shape = (reduced_size, reduced_size)
         super().__init__(
