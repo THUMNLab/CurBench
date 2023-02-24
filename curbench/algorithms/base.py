@@ -82,8 +82,7 @@ class BaseTrainer():
         trainer: A image classifier, language model, recommendation system, etc.
     """
 
-    def __init__(self, data_name, net_name, device_name, 
-                 num_epochs, random_seed, cl=BaseCL()):
+    def __init__(self, data_name, net_name, num_epochs, random_seed, cl=BaseCL()):
         """Initiate the Model Trainer according to data_name.
 
         If the dataset is CIFAR-10, CIFAR-100, ImageNet or their variants, the Model Trainer can be a Image Classifier.
@@ -92,7 +91,12 @@ class BaseTrainer():
         """
         if data_name.startswith('cifar') or data_name.startswith('imagenet'):
             self.trainer = ImageClassifier(
-                data_name, net_name, device_name, num_epochs, random_seed,
+                data_name, net_name, num_epochs, random_seed,
+                cl.name, cl.data_prepare, cl.model_prepare,
+                cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum)
+        elif data_name == 'ptb' or data_name.startswith('wikitext'):
+            self.trainer = LanguageModel(
+                data_name, net_name, num_epochs, random_seed,
                 cl.name, cl.data_prepare, cl.model_prepare,
                 cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum)
         else:

@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from curbench.algorithms import BaseTrainer
@@ -5,17 +6,17 @@ from curbench.algorithms import BaseTrainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
-parser.add_argument('--net', type=str, default='resnet18')
-parser.add_argument('--device', type=str, default='cuda')
+parser.add_argument('--net', type=str, default='lenet')
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--seed', type=int, default=42)
+parser.add_argument('--gpus', type=str, default='0')
 args = parser.parse_args()
 
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 trainer = BaseTrainer(
      data_name=args.data,
      net_name=args.net,
-     device_name=args.device,
      num_epochs=args.epochs,
      random_seed=args.seed,
 )

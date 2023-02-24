@@ -9,7 +9,7 @@ from ..utils import get_logger, set_random
 
 
 class ImageClassifier():
-    def __init__(self, data_name, net_name, device_name, num_epochs, random_seed,
+    def __init__(self, data_name, net_name, num_epochs, random_seed,
                  algorithm_name, data_prepare, model_prepare, data_curriculum, 
                  model_curriculum, loss_curriculum):
         self.random_seed = random_seed
@@ -22,7 +22,7 @@ class ImageClassifier():
         self.loss_curriculum = loss_curriculum
 
         self._init_dataloader(data_name)
-        self._init_model(data_name, net_name, device_name, num_epochs)
+        self._init_model(data_name, net_name, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
@@ -39,9 +39,9 @@ class ImageClassifier():
         self.data_prepare(self.train_loader)
 
 
-    def _init_model(self, data_name, net_name, device_name, num_epochs):
+    def _init_model(self, data_name, net_name, num_epochs):
         self.net = get_net(net_name, data_name)
-        self.device = torch.device(device_name \
+        self.device = torch.device('cuda:0' \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
 
@@ -103,7 +103,7 @@ class ImageClassifier():
             
             self.lr_scheduler.step()
             self.logger.info(
-                '[%3d]  Train data = %6d  Train Acc = %.4f  Loss = %.4f  Time = %.2f'
+                '[%3d]  Train data = %6d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss / (step + 1), time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
