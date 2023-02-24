@@ -8,6 +8,8 @@ from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 from PIL import Image
+from torch.utils.data import Subset
+from torchvision import datasets, transforms
 
 
 class ImageNet32():
@@ -63,7 +65,7 @@ class ImageNet32():
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        img, target = self.data[index], self.targets[index]
+        img, target = self.data[index], self.targets[index] - 1
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
@@ -85,11 +87,51 @@ class ImageNet32():
         return f"Split: {split}"
 
 
+def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1, 
+                           augment=True, cutout_length=0, noise_ratio=0.0):
+    assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
+        'Assert Error: valid_size should be in the range [0, 1].'
+    
+    MEAN = [0.485, 0.456, 0.406]
+    STD = [0.229, 0.224, 0.225]
+
+    transf = [
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+    ] if augment else []
+    normalize = [
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD),
+    ]
+    cutout = [Cutout(cutout_length)] \
+      if cutout_length > 0 else []
+    
+    train_transform = transforms.Compose(transf + normalize + cutout)
+    test_transform = transforms.Compose(normalize)
+
+    train_dataset = ImageNet32('data', train=True, transform=train_transform)
+    valid_dataset = ImageNet32('data', train=True, transform=test_transform)
+    test_dataset = ImageNet32('data', train=False, transform=test_transform)
+
+    num_train = len(train_dataset)
+    indices = list(range(num_train))
+    split = int(np.floor(valid_ratio * num_train))
+    np.random.shuffle(indices)
+
+    train_idx, valid_idx = indices[split:], indices[:split]
+    train_dataset = Subset(train_dataset, train_idx)
+    valid_dataset = Subset(valid_dataset, valid_idx)
+
+    if noise_ratio > 0.0:
+        train_dataset = LabelNoise(train_dataset, noise_ratio, 1000)
+
+    return train_dataset, valid_dataset, test_dataset
+
+
 if __name__ == '__main__':
     import torch
     from torch.utils.data import DataLoader
     import torchvision
-    import torchvision.transforms as transforms
 
     transform = transforms.Compose([
         transforms.ToTensor(),
