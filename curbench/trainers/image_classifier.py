@@ -27,8 +27,7 @@ class ImageClassifier():
 
 
     def _init_dataloader(self, data_name):
-        train_dataset, valid_dataset, test_dataset = \
-            get_dataset_with_noise('./data', data_name)
+        train_dataset, valid_dataset, test_dataset = get_dataset_with_noise(data_name)
 
         self.train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=100, shuffle=True, num_workers=2, pin_memory=True)

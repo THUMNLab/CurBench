@@ -16,6 +16,7 @@ def get_net(net_name, data_name):
     classes_dict = {
         'cifar10': 10, 
         'cifar100': 100,
+        'imagenet32': 1000,
     }
     
     return net_dict[net_name](num_classes=classes_dict[data_name])
