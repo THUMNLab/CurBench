@@ -9,7 +9,6 @@ from ..backbones.text import RNNModel, SplitCrossEntropyLoss
 from ..utils import get_logger, set_random
 
 
-
 class LanguageModel():
     def __init__(self, data_name, net_name, num_epochs, random_seed,
                  algorithm_name, data_prepare, model_prepare, data_curriculum, 
@@ -29,17 +28,17 @@ class LanguageModel():
 
 
     def _init_dataloader(self, data_name):
-        self.batch_size = 80
+        self.batch_size = 20
         self.bptt = 70
 
         self.corpus = get_corpus(data_name)
-        self.train_data = batchify(self.corpus.train, batch_size=self.batch_size)
-        self.valid_data = batchify(self.corpus.valid, batch_size=self.batch_size)
-        self.test_data = batchify(self.corpus.test, batch_size=self.batch_size)
+        self.train_data = batchify(self.corpus.train, batch_size=self.batch_size).cuda()
+        self.valid_data = batchify(self.corpus.valid, batch_size=self.batch_size).cuda()
+        self.test_data = batchify(self.corpus.test, batch_size=self.batch_size).cuda()
 
 
     def _init_model(self, data_name, net_name, num_epochs):
-        self.epochs = num_epochs
+        self.epochs = 500
         self.emsize = 400
         self.nhid = 1150
         self.nlayers = 3
@@ -66,9 +65,9 @@ class LanguageModel():
             # WikiText-103
             splits = [2800, 20000, 76000]
         print('Using', splits)
-        self.criterion = SplitCrossEntropyLoss(400, splits=splits, verbose=False)
+        self.criterion = SplitCrossEntropyLoss(self.emsize, splits=splits, verbose=False)
 
-        self.net = RNNModel(net_name, self.ntokens, self.emsize, self.nhid, self.nlayers, 
+        self.net = RNNModel(net_name.upper(), self.ntokens, self.emsize, self.nhid, self.nlayers, 
                             self.dropout, self.dropouth, self.dropouti, self.dropoute, self.wdrop, True)
         self.device = torch.device('cuda:0' \
             if torch.cuda.is_available() else 'cpu')
@@ -79,12 +78,12 @@ class LanguageModel():
         total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in self.params if x.size())
         print('Model total parameters:', total_params)
 
-        self.optimizer = torch.optim.Adam(self.params, lr=self.lr, weight_decay=1.2e-6)
+        self.optimizer = torch.optim.SGD(self.params, lr=self.lr, weight_decay=self.wdecay)
 
     
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
-        self.log_interval = 1
+        self.log_interval = 200
 
         log_info = '%s-%s-%s-%d-%d-%s' % (
             algorithm_name, data_name, net_name, num_epochs, random_seed,
