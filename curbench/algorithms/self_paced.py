@@ -22,8 +22,7 @@ class SelfPaced(BaseCL):
         criterion: The loss function.
         weights: The weights of all training data instances.
     """
-    def __init__(self, start_rate, grow_epochs, 
-                 grow_fn, weight_fn):
+    def __init__(self, start_rate, grow_epochs, grow_fn, weight_fn):
         super(SelfPaced, self).__init__()
 
         self.name = 'self_paced'

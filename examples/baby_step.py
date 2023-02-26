@@ -1,32 +1,32 @@
 import os
 import argparse
 
-from curbench.algorithms import SelfPacedTrainer
+from curbench.algorithms import BabyStepTrainer
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
-parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--gpus', type=str, default='0')
 parser.add_argument('--start_rate', type=float, default=0.0)
-parser.add_argument('--grow_epochs', type=int, default=100)
-parser.add_argument('--grow_fn', type=str, default='linear')
-parser.add_argument('--weight_fn', type=str, default='hard')
+parser.add_argument('--grow_rate', type=float, default=0.1)
+parser.add_argument('--grow_interval', type=int, default=20)
+parser.add_argument('--not_sorted', action="store_true")
 args = parser.parse_args()
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
-trainer = SelfPacedTrainer(
+trainer = BabyStepTrainer(
     data_name=args.data,
     net_name=args.net,
     num_epochs=args.epochs,
     random_seed=args.seed,
     start_rate=args.start_rate,
-    grow_epochs=args.grow_epochs,
-    grow_fn=args.grow_fn,
-    weight_fn=args.weight_fn,
+    grow_rate=args.grow_rate,
+    grow_interval=args.grow_interval,
+    not_sorted=args.not_sorted,
 )
 trainer.fit()
 trainer.evaluate()

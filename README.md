@@ -55,5 +55,17 @@ python examples/base.py
 ```
 
 
+## Run
+```bash
+# 1. vision standard
+python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpus <0/1/2/...>
+
+# 2. text standard
+python examples/base.py --data <ptb/wt2/wt103> --net <lstm/qrnn/bert> --gpus <0/1/2/...>
+
+# 3. graph standard
+```
+
+
 ## License
 We follow [Apache license](LICENSE) across the entire codebase from v0.2.
