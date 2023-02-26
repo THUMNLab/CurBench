@@ -94,7 +94,7 @@ class BaseTrainer():
                 data_name, net_name, num_epochs, random_seed,
                 cl.name, cl.data_prepare, cl.model_prepare,
                 cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum)
-        elif data_name == 'ptb' or data_name.startswith('wikitext'):
+        elif data_name == 'ptb' or data_name.startswith('wt'):
             self.trainer = LanguageModel(
                 data_name, net_name, num_epochs, random_seed,
                 cl.name, cl.data_prepare, cl.model_prepare,
