@@ -152,6 +152,8 @@ if __name__ == '__main__':
         plt.imshow(fig)
         plt.savefig('img.png')
 
-    dataiter = iter(testloader)
-    images, labels = next(dataiter)
-    imshow(torchvision.utils.make_grid(images))
+    # dataiter = iter(testloader)
+    # images, labels = next(dataiter)
+    for images, labels in testloader:
+        imshow(torchvision.utils.make_grid(images))
+        input()

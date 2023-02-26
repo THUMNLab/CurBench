@@ -5,9 +5,9 @@ __pycache__
 /*.egg-info
 /data
 /runs*
-/old*
 
 *.log
 *.txt
+old*
 run.sh
 test.py

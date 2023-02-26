@@ -1,7 +1,8 @@
 import os
-import torch
-
 from collections import Counter
+
+import torch
+from torch.utils.data import Dataset
 
 
 class Dictionary(object):
