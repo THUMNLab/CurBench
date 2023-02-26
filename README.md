@@ -18,7 +18,7 @@ Actively under development by @THUMNLab
 
 **CIFAR10** and **CIFAR100** will be downloaded automatically.
 
-**ImageNet32** is a downsampled version of ImageNet-1k, i.e., 1281167 training images from 1000 classes and 50000 validation images with 50 images per class, but resize all images to 32x32 pixels. It needs to be downloaded manually from the [official website](https://image-net.org/download.php). 
+**ImageNet32** is a downsampled version of ImageNet-1k, i.e., 1281167 training images from 1000 classes and 50000 validation images with 50 images per class, but resizes all images to 32x32 pixels. It needs to be downloaded manually from the [official website](https://image-net.org/download.php). 
 
 ``` bash
 CIFAR10: CurBench/data/cifar-10-batches-py/data_batch_1, ...
