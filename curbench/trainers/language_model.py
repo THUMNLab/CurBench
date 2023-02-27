@@ -29,12 +29,14 @@ class LanguageModel():
 
     def _init_dataloader(self, data_name):
         self.batch_size = 20
+        self.valid_batch_size = 10
+        self.test_batch_size = 1
         self.bptt = 70
 
         self.corpus = get_corpus(data_name)
         self.train_data = batchify(self.corpus.train, batch_size=self.batch_size).cuda()
-        self.valid_data = batchify(self.corpus.valid, batch_size=self.batch_size).cuda()
-        self.test_data = batchify(self.corpus.test, batch_size=self.batch_size).cuda()
+        self.valid_data = batchify(self.corpus.valid, batch_size=self.valid_batch_size).cuda()
+        self.test_data = batchify(self.corpus.test, batch_size=self.test_batch_size).cuda()
 
 
     def _init_model(self, data_name, net_name, num_epochs):
@@ -98,13 +100,13 @@ class LanguageModel():
         self.logger = get_logger(log_file, log_info)
 
 
-    def repackage_hidden(self, h):
+    def _repackage_hidden(self, h):
         """Wraps hidden states in new Tensors,
         to detach them from their history."""
         if isinstance(h, torch.Tensor):
             return h.detach()
         else:
-            return tuple(self.repackage_hidden(v) for v in h)
+            return tuple(self._repackage_hidden(v) for v in h)
 
 
     def _train_one_epoch(self, epoch):
@@ -128,7 +130,7 @@ class LanguageModel():
 
             # Starting each batch, we detach the hidden state from how it was previously produced.
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
-            hidden = self.repackage_hidden(hidden)
+            hidden = self._repackage_hidden(hidden)
             self.optimizer.zero_grad()
 
             output, hidden, rnn_hs, dropped_rnn_hs = self.net(data, hidden, return_h=True)
@@ -177,7 +179,7 @@ class LanguageModel():
                         tmp[prm] = prm.data.clone()
                         prm.data = self.optimizer.state[prm]['ax'].clone()
 
-                    val_loss2 = self._valid(self.valid_data)
+                    val_loss2 = self._valid(self.valid_data, self.valid_batch_size)
                     self.logger.info('-' * 89)
                     self.logger.info('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                         'valid ppl {:8.2f} | valid bpc {:8.3f}'.format(
@@ -193,7 +195,7 @@ class LanguageModel():
                         prm.data = tmp[prm].clone()
 
                 else:
-                    val_loss = self._valid(self.valid_data, self.batch_size)
+                    val_loss = self._valid(self.valid_data, self.valid_batch_size)
                     self.logger.info('-' * 89)
                     self.logger.info('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                         'valid ppl {:8.2f} | valid bpc {:8.3f}'.format(
@@ -212,7 +214,7 @@ class LanguageModel():
             print('Exiting from training early')
 
 
-    def _valid(self, data_source, batch_size=10):
+    def _valid(self, data_source, batch_size):
         # Turn on evaluation mode which disables dropout.
         self.net.eval()
         if self.net.rnn_type == 'QRNN': self.net.reset()
@@ -222,7 +224,7 @@ class LanguageModel():
             data, targets = get_batch(data_source, i, self.bptt)
             output, hidden = self.net(data, hidden)
             total_loss += len(data) * self.criterion(self.net.decoder.weight, self.net.decoder.bias, output, targets).data
-            hidden = self.repackage_hidden(hidden)
+            hidden = self._repackage_hidden(hidden)
         return total_loss.item() / len(data_source)
 
 
@@ -233,9 +235,12 @@ class LanguageModel():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        test_acc = self._valid(self.test_loader)
-        self.logger.info('Final Test Acc = %.4f' % (test_acc))
-        return test_acc
+        test_loss = self._valid(self.test_data, self.test_batch_size)
+        print('=' * 89)
+        print('| End of training | test loss {:5.2f} | test ppl {:8.2f} | test bpc {:8.3f}'.format(
+            test_loss, math.exp(test_loss), test_loss / math.log(2)))
+        print('=' * 89)
+        return test_loss
 
 
     def export(self, net_dir=None):
