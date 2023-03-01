@@ -1,8 +1,7 @@
 import os
 import argparse
 
-from curbench.algorithms import \
-    ScreenerNet, ScreenerNetTrainer
+from curbench.algorithms import ScreenerNet, ScreenerNetTrainer
 
 
 parser = argparse.ArgumentParser()

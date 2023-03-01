@@ -1,8 +1,7 @@
 import os
 import argparse
 
-from curbench.algorithms import \
-    BaseTrainer, CoarseToFineTrainer
+from curbench.algorithms import BaseTrainer, CoarseToFineTrainer
 
 
 parser = argparse.ArgumentParser()

@@ -7,8 +7,7 @@ from ..backbones.graph import get_net
 from ..utils import get_logger, set_random
 
 
-
-class NodeClassifier():
+class GraphClassifier():
     def __init__(self, data_name, net_name, num_epochs, random_seed, algorithm_name, 
                  data_prepare, model_prepare, data_curriculum, model_curriculum, loss_curriculum):
         self.random_seed = random_seed
@@ -26,20 +25,30 @@ class NodeClassifier():
 
     def _init_dataloader(self, data_name):
         self.dataset = get_dataset(data_name)
+        dataset = dataset.shuffle()
+        train_dataset = dataset[:150]
+        test_dataset = dataset[150:]
+        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
 
     def _init_model(self, data_name, net_name, num_epochs):
-        self.net = get_net(net_name, self.dataset)
+        self.hidden_channels = 16
+        self.lr = 0.01
+        self.epochs = 200
+
+        # self.net = GCN(self.dataset.num_features, self.hidden_channels, self.dataset.num_classes)
+        self.net = get_net(net_name, data_name)
         self.device = torch.device('cuda:0' \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
-        self.data = self.dataset[0].to(self.device)
 
-        self.epochs = num_epochs
+        self.optimizer = torch.optim.Adam([
+            dict(params=model.conv1.parameters(), weight_decay=5e-4),
+            dict(params=model.conv2.parameters(), weight_decay=0)
+        ], lr=args.lr)  # Only perform weight-decay on first convolution.
         self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
-        self.optimizer = torch.optim.Adam(
-            self.net.parameters(), lr=0.01, weight_decay=5e-4)
-        
+
     
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
@@ -54,49 +63,40 @@ class NodeClassifier():
         self.log_interval = 1
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
 
+        init_wandb(name='%s-%s' % (net_name, data_name), lr=self.lr, epochs=self.epochs,
+           hidden_channels=self.hidden_channels, device=self.device)
+
+
+    def _train_one_epoch(self, epoch):
+        self.net.train()
+        self.optimizer.zero_grad()
+        out = model(self.data.x, self.data.edge_index, self.data.edge_attr)
+        loss = self.criterion(out[data.train_mask], data.y[data.train_mask])
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
+
 
     def _train(self):
-        best_acc = 0.0
-
-        for epoch in range(self.epochs):
-            t = time.time()
-            self.net.train()
-            self.optimizer.zero_grad()
-            masks = self.data.train_mask
-            labels = self.data.y
-            outputs = self.net(self.data)
-            loss = self.criterion(outputs[masks], labels[masks])
-            loss.backward()
-            self.optimizer.step()
-
-            train_loss = loss.item()
-            predicts = outputs.argmax(dim=1)
-            correct = predicts[masks].eq(labels[masks]).sum().item()
-            total = masks.sum()
-
-            self.logger.info(
-                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
-                % (epoch + 1, total, correct / total, train_loss, time.time() - t))
-            
-            if (epoch + 1) % self.log_interval == 0:
-                valid_acc = self._valid(self.data.val_mask)
-                if valid_acc > best_acc:
-                    best_acc = valid_acc
-                    torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
-                self.logger.info(
-                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
-                    % (epoch + 1, self.data.val_mask.sum(), valid_acc, best_acc))
+        best_val_acc = final_test_acc = 0
+        for epoch in range(1, self.epochs + 1):
+            loss = self._train_one_epoch(epoch)
+            train_acc, val_acc, tmp_test_acc = self._valid()
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                test_acc = tmp_test_acc
+            log(Epoch=epoch, Loss=loss, Train=train_acc, Val=val_acc, Test=test_acc)
 
 
-    def _valid(self, masks):
-        self.net.eval()
+    def _valid(self):
+        model.eval()
         with torch.no_grad():
-            labels = self.data.y
-            outputs = self.net(self.data)
-            predicts = outputs.argmax(dim=1)
-            correct = predicts[masks].eq(labels[masks]).sum().item()
-            total = masks.sum()
-        return correct / total
+            pred = self.net(self.data.x, self.data.edge_index, self.data.edge_attr).argmax(dim=-1)
+
+        accs = []
+        for mask in [data.train_mask, data.val_mask, data.test_mask]:
+            accs.append(int((pred[mask] == data.y[mask]).sum()) / int(mask.sum()))
+        return accs
     
 
     def fit(self):
@@ -106,8 +106,8 @@ class NodeClassifier():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        valid_acc = self._valid(self.data.val_mask)
-        test_acc = self._valid(self.data.test_mask)
+        valid_acc = self._valid(self.valid_loader)
+        test_acc = self._valid(self.test_loader)
         self.logger.info('Best Valid Acc = %.4f and Final Test Acc = %.4f' % (valid_acc, test_acc))
         return test_acc
 

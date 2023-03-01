@@ -8,11 +8,11 @@ from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 from PIL import Image
-from torch.utils.data import Subset
-from torchvision import datasets, transforms
+from torch.utils.data import Subset, Dataset
+from torchvision import transforms
 
 
-class ImageNet32():
+class ImageNet32(Dataset):
     """`ImageNet 32x32 <https://patrykchrabaszcz.github.io/Imagenet32/>`_ Dataset.
 
     Args:

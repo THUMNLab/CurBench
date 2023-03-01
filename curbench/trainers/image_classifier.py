@@ -9,18 +9,16 @@ from ..utils import get_logger, set_random
 
 
 class ImageClassifier():
-    def __init__(self, data_name, net_name, num_epochs, random_seed,
-                 algorithm_name, data_prepare, model_prepare, data_curriculum, 
-                 model_curriculum, loss_curriculum):
+    def __init__(self, data_name, net_name, num_epochs, random_seed, algorithm_name, 
+                 data_prepare, model_prepare, data_curriculum, model_curriculum, loss_curriculum):
         self.random_seed = random_seed
-        set_random(self.random_seed)
-
         self.data_prepare = data_prepare
         self.model_prepare = model_prepare
         self.data_curriculum = data_curriculum
         self.model_curriculum = model_curriculum
         self.loss_curriculum = loss_curriculum
 
+        set_random(self.random_seed)
         self._init_dataloader(data_name)
         self._init_model(data_name, net_name, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
@@ -100,8 +98,8 @@ class ImageClassifier():
                 self.optimizer.step()
 
                 train_loss += loss.item() * labels.shape[0]
-                _, predicted = outputs.max(dim=1)
-                correct += predicted.eq(labels).sum().item()
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
                 total += labels.shape[0]
             
             self.lr_scheduler.step()
@@ -130,9 +128,9 @@ class ImageClassifier():
                 labels = data[1].to(self.device)
 
                 outputs = self.net(inputs)
-                _, predicted = torch.max(outputs, dim=1)
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
                 total += labels.shape[0]
-                correct += predicted.eq(labels).sum().item()
         return correct / total
 
 

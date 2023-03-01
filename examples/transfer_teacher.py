@@ -1,8 +1,7 @@
 import os
 import argparse
 
-from curbench.algorithms import \
-    BaseTrainer, TransferTeacherTrainer
+from curbench.algorithms import BaseTrainer, TransferTeacherTrainer
 
 
 parser = argparse.ArgumentParser()

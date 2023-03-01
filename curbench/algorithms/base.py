@@ -86,21 +86,23 @@ class BaseTrainer():
         """Initiate the Model Trainer according to data_name.
 
         If the dataset is CIFAR-10, CIFAR-100, ImageNet or their variants, the Model Trainer can be a Image Classifier.
-        If the dataset is PTB, WikiText or their variants, the Model Trainer can be a Language Model.
+        If the dataset is GLUE, the Model Trainer can be a Text Classifier.
         If the dataset is not a predefined one, users can create a custom Model Trainer.
         """
-        if data_name.startswith('cifar') or data_name.startswith('imagenet'):
-            self.trainer = ImageClassifier(
-                data_name, net_name, num_epochs, random_seed,
-                cl.name, cl.data_prepare, cl.model_prepare,
-                cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum)
-        elif data_name == 'ptb' or data_name.startswith('wt'):
-            self.trainer = LanguageModel(
-                data_name, net_name, num_epochs, random_seed,
-                cl.name, cl.data_prepare, cl.model_prepare,
-                cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum)
-        else:
-            raise NotImplementedError()
+        trainer_dict = {
+            'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier,
+            'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
+            'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
+            'collab': GraphClassifier, 'dd': GraphClassifier, 'ptc_mr': GraphClassifier, 'imdb-binary': GraphClassifier,
+        }
+        assert data_name in trainer_dict, \
+            'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
+        
+        self.trainer = trainer_dict[data_name](
+            data_name, net_name, num_epochs, random_seed,
+            cl.name, cl.data_prepare, cl.model_prepare,
+            cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum,
+        )
         
 
     def fit(self):

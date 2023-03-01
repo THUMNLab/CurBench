@@ -1,2 +1,3 @@
 from .image_classifier import ImageClassifier
-from .language_model import LanguageModel
+from .node_classifier import NodeClassifier
+from .graph_classifier import GraphClassifier
