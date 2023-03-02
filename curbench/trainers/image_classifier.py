@@ -53,8 +53,7 @@ class ImageClassifier():
             self.net.parameters(), lr=0.001, weight_decay=0.1)
         self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
 
-        self.model_prepare(
-            self.net, self.device, self.epochs, 
+        self.model_prepare(self.net, self.device, self.epochs, 
             self.criterion, self.optimizer, self.lr_scheduler)
 
     
