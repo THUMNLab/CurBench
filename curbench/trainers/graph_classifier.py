@@ -1,8 +1,9 @@
 import os
 import time
 import torch
+from torch_geometric.loader import DataLoader
 
-from ..datasets.graph import get_dataset
+from ..datasets.graph import get_dataset, split_dataset
 from ..backbones.graph import get_net
 from ..utils import get_logger, set_random
 
@@ -25,29 +26,21 @@ class GraphClassifier():
 
     def _init_dataloader(self, data_name):
         self.dataset = get_dataset(data_name)
-        dataset = dataset.shuffle()
-        train_dataset = dataset[:150]
-        test_dataset = dataset[150:]
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+        train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
+        self.train_loader = DataLoader(train_dataset, batch_size=50, shuffle=True)
+        self.valid_loader = DataLoader(valid_dataset, batch_size=50, shuffle=False)
+        self.test_loader = DataLoader(test_dataset, batch_size=50, shuffle=False)
 
 
     def _init_model(self, data_name, net_name, num_epochs):
-        self.hidden_channels = 16
-        self.lr = 0.01
-        self.epochs = 200
-
-        # self.net = GCN(self.dataset.num_features, self.hidden_channels, self.dataset.num_classes)
-        self.net = get_net(net_name, data_name)
+        self.net = get_net(net_name, self.dataset)
         self.device = torch.device('cuda:0' \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
 
-        self.optimizer = torch.optim.Adam([
-            dict(params=model.conv1.parameters(), weight_decay=5e-4),
-            dict(params=model.conv2.parameters(), weight_decay=0)
-        ], lr=args.lr)  # Only perform weight-decay on first convolution.
+        self.epochs = num_epochs
         self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
 
     
     def _init_logger(self, algorithm_name, data_name, 
@@ -63,40 +56,60 @@ class GraphClassifier():
         self.log_interval = 1
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
 
-        init_wandb(name='%s-%s' % (net_name, data_name), lr=self.lr, epochs=self.epochs,
-           hidden_channels=self.hidden_channels, device=self.device)
-
-
-    def _train_one_epoch(self, epoch):
-        self.net.train()
-        self.optimizer.zero_grad()
-        out = model(self.data.x, self.data.edge_index, self.data.edge_attr)
-        loss = self.criterion(out[data.train_mask], data.y[data.train_mask])
-        loss.backward()
-        self.optimizer.step()
-        return loss.item()
-
 
     def _train(self):
-        best_val_acc = final_test_acc = 0
-        for epoch in range(1, self.epochs + 1):
-            loss = self._train_one_epoch(epoch)
-            train_acc, val_acc, tmp_test_acc = self._valid()
-            if val_acc > best_val_acc:
-                best_val_acc = val_acc
-                test_acc = tmp_test_acc
-            log(Epoch=epoch, Loss=loss, Train=train_acc, Val=val_acc, Test=test_acc)
+        best_acc = 0.0
+        for epoch in range(self.epochs):
+            t = time.time()
+            total = 0
+            correct = 0
+            train_loss = 0.0
+
+            self.net.train()
+            for step, data in enumerate(self.train_loader):
+                inputs = data.to(self.device)
+                labels = data.y.to(self.device)
+
+                self.optimizer.zero_grad()
+                outputs = self.net(inputs)
+                loss = self.criterion(outputs, labels)
+                loss.backward()
+                self.optimizer.step()
+
+                train_loss += loss.item() * data.num_graphs
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
+                total += data.num_graphs
+
+            self.logger.info(
+                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
+                % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
+
+            if (epoch + 1) % self.log_interval == 0:
+                valid_acc = self._valid(self.valid_loader)
+                if valid_acc > best_acc:
+                    best_acc = valid_acc
+                    torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
+                self.logger.info(
+                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
+                    % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
 
 
-    def _valid(self):
-        model.eval()
+    def _valid(self, loader):
+        total = 0
+        correct = 0
+
+        self.net.eval()
         with torch.no_grad():
-            pred = self.net(self.data.x, self.data.edge_index, self.data.edge_attr).argmax(dim=-1)
+            for data in loader:
+                inputs = data.to(self.device)
+                labels = data.y.to(self.device)
 
-        accs = []
-        for mask in [data.train_mask, data.val_mask, data.test_mask]:
-            accs.append(int((pred[mask] == data.y[mask]).sum()) / int(mask.sum()))
-        return accs
+                outputs = self.net(inputs)
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
+                total += data.num_graphs
+        return correct / total
     
 
     def fit(self):
