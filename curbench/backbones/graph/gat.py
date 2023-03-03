@@ -9,9 +9,9 @@ import torch.nn as nn
 from torch_geometric.nn import GATConv, global_mean_pool
 
 
-class GAT4Node(nn.Module):
+class GATForNode(nn.Module):
     def __init__(self, dataset, hidden_channels=8, heads=8, dropout=0.6):
-        super(GAT4Node, self).__init__()
+        super(GATForNode, self).__init__()
         self.gat1 = GATConv(dataset.num_features, hidden_channels, heads=heads, dropout=dropout)
         self.gat2 = GATConv(hidden_channels * heads, dataset.num_classes, dropout=dropout)
         self.elu = nn.ELU()
@@ -28,9 +28,9 @@ class GAT4Node(nn.Module):
         return x
 
 
-class GAT4Graph(nn.Module):
+class GATForGraph(nn.Module):
     def __init__(self, dataset, hidden_channels=32, heads=8, dropout=0.6):
-        super(GAT4Graph, self).__init__()
+        super(GATForGraph, self).__init__()
         self.gat1 = GATConv(dataset.num_features, hidden_channels, heads=heads, dropout=dropout)
         self.gat2 = GATConv(hidden_channels * heads, hidden_channels, heads=heads, dropout=dropout)
         self.gat3 = GATConv(hidden_channels * heads, hidden_channels, heads=heads, dropout=dropout)

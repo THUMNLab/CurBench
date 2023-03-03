@@ -1,4 +1,3 @@
-import os
 import argparse
 
 from curbench.algorithms import DataParametersTrainer
@@ -7,9 +6,9 @@ from curbench.algorithms import DataParametersTrainer
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
+parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--gpus', type=str, default='0')
 parser.add_argument('--init_class_param', type=float, default=1.0)
 parser.add_argument('--lr_class_param', type=float, default=0.1)
 parser.add_argument('--wd_class_param', type=float, default=1e-4)
@@ -18,11 +17,11 @@ parser.add_argument('--lr_data_param', type=float, default=0.8)
 parser.add_argument('--wd_data_param', type=float, default=1e-8)
 args = parser.parse_args()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 trainer = DataParametersTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
     init_class_param=args.init_class_param,

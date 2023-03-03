@@ -13,7 +13,6 @@ data_dict = {
 def get_dataset(data_name):
     assert data_name in data_dict, \
         'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    
     return data_dict[data_name]()
 
 
@@ -32,5 +31,4 @@ def get_dataset_with_noise(data_name):
 
     assert data_name in data_dict, \
         'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    
     return data_dict[data_name](noise_ratio=noise_ratio)

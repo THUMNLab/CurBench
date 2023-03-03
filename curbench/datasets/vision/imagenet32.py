@@ -2,14 +2,15 @@
 Based on https://pytorch.org/vision/stable/_modules/torchvision/datasets/cifar.html#CIFAR10
 '''
 
-import os.path
+import os
 import pickle
 from typing import Any, Callable, Optional, Tuple
-
 import numpy as np
 from PIL import Image
 from torch.utils.data import Subset, Dataset
 from torchvision import transforms
+
+from .utils import Cutout, LabelNoise
 
 
 class ImageNet32(Dataset):
@@ -152,8 +153,6 @@ if __name__ == '__main__':
         plt.imshow(fig)
         plt.savefig('img.png')
 
-    # dataiter = iter(testloader)
-    # images, labels = next(dataiter)
     for images, labels in testloader:
         imshow(torchvision.utils.make_grid(images))
         input()

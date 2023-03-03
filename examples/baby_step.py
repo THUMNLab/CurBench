@@ -1,4 +1,3 @@
-import os
 import argparse
 
 from curbench.algorithms import BabyStepTrainer
@@ -7,20 +6,20 @@ from curbench.algorithms import BabyStepTrainer
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
+parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--gpus', type=str, default='0')
 parser.add_argument('--start_rate', type=float, default=0.0)
 parser.add_argument('--grow_rate', type=float, default=0.1)
 parser.add_argument('--grow_interval', type=int, default=20)
 parser.add_argument('--not_sorted', action="store_true")
 args = parser.parse_args()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 trainer = BabyStepTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
     start_rate=args.start_rate,

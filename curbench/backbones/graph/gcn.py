@@ -9,9 +9,9 @@ import torch.nn as nn
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 
-class GCN4Node(nn.Module):
+class GCNForNode(nn.Module):
     def __init__(self, dataset, hidden_channels=16):
-        super(GCN4Node, self).__init__()
+        super(GCNForNode, self).__init__()
         self.conv1 = GCNConv(dataset.num_features, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, dataset.num_classes)
         self.relu = nn.ReLU()
@@ -27,9 +27,9 @@ class GCN4Node(nn.Module):
         return x
 
 
-class GCN4Graph(nn.Module):
+class GCNForGraph(nn.Module):
     def __init__(self, dataset, hidden_channels=64):
-        super(GCN4Graph, self).__init__()
+        super(GCNForGraph, self).__init__()
         self.conv1 = GCNConv(dataset.num_features, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)

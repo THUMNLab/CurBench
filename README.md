@@ -28,13 +28,12 @@ ImageNet32: CurBench/data/imagenet32/train_data_batch_1, ...
 
 ### Text
 
-**Penn Treebank (PTB)**, **WikiText-2 (WT2)**, and **WikiText-103 (WT103)**
-``` bash
-PTB: CurBench/data/penn/train.txt, ...
-WT2: CurBench/data/wikitext-2/train.txt, ...
-```
+**GLUE** will be downloaded automatically and it consists of **cola**, **sst2**, **mrpc**, **qqp**, **stsb**, **mnli**, **qnli**, **rte**, **wnli**, **ax**.
 
 ### Graph
+**Planetoid** will be downloaded automatically and it consists of **Cora**, **CiteSeer**, **PubMed**.
+
+**TUDataset** will be downloaded automatically.
 
 
 ## Quick Start
@@ -58,12 +57,13 @@ python examples/base.py
 ## Run
 ```bash
 # 1. vision standard
-python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpus <0/1/2/...>
+python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpu <0/1/2/...>
 
 # 2. text standard
-python examples/base.py --data <ptb/wt2/wt103> --net <lstm/qrnn/bert> --gpus <0/1/2/...>
+python examples/base.py --data <cola/sst2> --net <lstm/bert/gpt> --gpu <0/1/2/...>
 
 # 3. graph standard
+python examples/base.py --data <cora/nci1> --net <gcn/gat/sage> --gpu <0/1/2/...>
 ```
 
 

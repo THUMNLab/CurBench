@@ -1,14 +1,14 @@
 import os
 import time
 import torch
+import evaluate
 
-from ..datasets.vision import get_dataset_with_noise
-from ..backbones.vision import get_net
+from ..datasets.text import get_dataset, convert_dataset
+from ..backbones.text import get_net
 from ..utils import get_logger, set_random, create_log_dir
 
 
-
-class ImageClassifier():
+class TextClassifier():
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, algorithm_name, 
                  data_prepare, model_prepare, data_curriculum, model_curriculum, loss_curriculum):
         self.random_seed = random_seed
@@ -19,45 +19,42 @@ class ImageClassifier():
         self.loss_curriculum = loss_curriculum
 
         set_random(self.random_seed)
-        self._init_dataloader(data_name)
+        self._init_dataloader(data_name, net_name)
         self._init_model(data_name, net_name, gpu_index, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
-    def _init_dataloader(self, data_name):
-        self.dataset = get_dataset_with_noise(data_name)    # list: [train, valid, test]
-        
-        train_dataset, valid_dataset, test_dataset = self.dataset
-        self.train_loader = torch.utils.data.DataLoader(
-            train_dataset, batch_size=50, shuffle=True, pin_memory=True)
-        self.valid_loader = torch.utils.data.DataLoader(
-            valid_dataset, batch_size=50, shuffle=False, pin_memory=True)
-        self.test_loader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=50, shuffle=False, pin_memory=True)
+    def _init_dataloader(self, data_name, net_name):
+        self.dataset = get_dataset(data_name)     # dict: {train, valid, test}
 
-        self.data_prepare(self.train_loader)
+        dataset = convert_dataset(data_name, net_name, self.dataset)
+        eval_splits = [x for x in dataset.keys() if 'validation' in x]
+        self.train_loader = torch.utils.data.DataLoader(
+            dataset['train'], batch_size=50, pin_memory=True)
+        if len(eval_splits) == 1:
+            self.valid_loader = torch.utils.data.DataLoader(
+                dataset['validation'], batch_size=50, pin_memory=True)
+            self.test_loader = torch.utils.data.DataLoader(
+                dataset['test'], batch_size=50, pin_memory=True)
+        else:
+            self.valid_loader = [torch.utils.data.DataLoader(
+                dataset[x], batch_size=50, pin_memory=True) for x in eval_splits]
+            self.test_loader = [torch.utils.data.DataLoader(
+                dataset[x], batch_size=50, pin_memory=True) for x in eval_splits]
 
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
-        self.net = get_net(net_name, data_name)
+        self.net = get_net(net_name, self.dataset)
+        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-        # self.optimizer = torch.optim.SGD(
-        #     self.net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-        # self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        #     self.optimizer, T_max=self.epochs, eta_min=1e-6)
-        self.optimizer = torch.optim.AdamW(
-            self.net.parameters(), lr=0.001, weight_decay=0.1)
-        self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=0.001)
+        self.metric = evaluate.load('glue', data_name)
 
-        self.model_prepare(self.net, self.device, self.epochs, 
-            self.criterion, self.optimizer, self.lr_scheduler)
 
-    
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
@@ -66,7 +63,7 @@ class ImageClassifier():
             time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
         self.log_dir = create_log_dir(log_info)
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
-        
+
 
     def _train(self):
         best_acc = 0.0
@@ -74,60 +71,49 @@ class ImageClassifier():
         for epoch in range(self.epochs):
             t = time.time()
             total = 0
-            correct = 0
             train_loss = 0.0
+            predicts, labels = [], []
 
-            loader = self.data_curriculum(self.train_loader)    # curriculum part
-            net = self.model_curriculum(self.net)               # curriculum part
+            self.net.train()
+            for step, data in enumerate(self.train_loader):
+                inputs = {k: v.to(self.device) for k, v in data.items()}
 
-            net.train()
-            for step, data in enumerate(loader):
-                inputs = data[0].to(self.device)
-                labels = data[1].to(self.device)
-                indices = data[2].to(self.device)
-                
                 self.optimizer.zero_grad()
-                outputs = net(inputs)
-                loss = self.loss_curriculum(                    # curriculum part
-                    self.criterion, outputs, labels, indices)
+                loss, outputs = self.net(**inputs)[:2]
                 loss.backward()
                 self.optimizer.step()
 
-                train_loss += loss.item() * labels.shape[0]
-                predicts = outputs.argmax(dim=1)
-                correct += predicts.eq(labels).sum().item()
-                total += labels.shape[0]
+                train_loss += loss.item() * len(inputs['labels'])
+                total += len(inputs['labels'])
+                predicts += outputs.argmax(dim=1).tolist()
+                labels += inputs['labels'].tolist()
             
-            self.lr_scheduler.step()
+            train_acc = self.metric.compute(predictions=predicts, references=labels)['accuracy']
             self.logger.info(
                 '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
-                % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
+                % (epoch + 1, total, train_acc, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
                 valid_acc = self._valid(self.valid_loader)
                 if valid_acc > best_acc:
                     best_acc = valid_acc
-                    torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
+                    torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
                     '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
             
 
     def _valid(self, loader):
-        total = 0
-        correct = 0
+        predicts, labels = [], []
 
         self.net.eval()
         with torch.no_grad():
             for data in loader:
-                inputs = data[0].to(self.device)
-                labels = data[1].to(self.device)
-
-                outputs = self.net(inputs)
-                predicts = outputs.argmax(dim=1)
-                correct += predicts.eq(labels).sum().item()
-                total += labels.shape[0]
-        return correct / total
+                inputs = {k: v.to(self.device) for k, v in data.items()}
+                outputs = self.net(**inputs)[1]
+                predicts += outputs.argmax(dim=1).tolist()
+                labels += inputs['labels'].tolist()
+        return self.metric.compute(predictions=predicts, references=labels)['accuracy']
 
 
     def fit(self):

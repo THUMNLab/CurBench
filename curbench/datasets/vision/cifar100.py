@@ -5,7 +5,6 @@
 
 
 import numpy as np
-
 from torch.utils.data import Subset
 from torchvision import datasets, transforms
 
@@ -13,7 +12,7 @@ from .utils import Cutout, LabelNoise
 
 
 def get_cifar100_dataset(data_dir='data', valid_ratio=0.1,
-                        augment=True, cutout_length=0, noise_ratio=0.0):
+                         augment=True, cutout_length=0, noise_ratio=0.0):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
 

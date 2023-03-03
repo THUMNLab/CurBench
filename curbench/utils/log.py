@@ -1,5 +1,13 @@
+import os
 import logging
 
+
+def create_log_dir(log_name):
+    log_root = 'runs'
+    log_dir = os.path.join(log_root, log_name)
+    if not os.path.exists(log_root): os.mkdir(log_root)
+    if not os.path.exists(log_dir): os.mkdir(log_dir)
+    return log_dir
 
 
 def get_logger(log_file, log_name=None):

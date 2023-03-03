@@ -1,8 +1,6 @@
-import random
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-
 
 
 class LabelNoise(Dataset):
@@ -12,9 +10,9 @@ class LabelNoise(Dataset):
         self.num_labels = num_labels
         self.labels = []
         for i, (_, y) in enumerate(self.dataset):
-            if random.random() < self.noise_ratio:
+            if np.random.rand() < self.noise_ratio:
                 self.labels.append(
-                    random.choice(list(range(0, y)) + list(range(y + 1, num_labels))))
+                    np.random.choice(list(range(0, y)) + list(range(y + 1, num_labels))))
             else:
                 self.labels.append(y)
 

@@ -1,15 +1,15 @@
 import os
 import time
 import torch
-from torch_geometric.loader import DataLoader
+import torch_geometric as pyg
 
-from ..datasets.graph import get_dataset, split_dataset
+from ..datasets.graph import get_dataset
 from ..backbones.graph import get_net
 from ..utils import get_logger, set_random
 
 
 class GraphClassifier():
-    def __init__(self, data_name, net_name, num_epochs, random_seed, algorithm_name, 
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, algorithm_name, 
                  data_prepare, model_prepare, data_curriculum, model_curriculum, loss_curriculum):
         self.random_seed = random_seed
         self.data_prepare = data_prepare
@@ -20,21 +20,25 @@ class GraphClassifier():
 
         set_random(self.random_seed)
         self._init_dataloader(data_name)
-        self._init_model(data_name, net_name, num_epochs)
+        self._init_model(data_name, net_name, gpu_index, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
     def _init_dataloader(self, data_name):
-        self.dataset = get_dataset(data_name)
-        train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
-        self.train_loader = DataLoader(train_dataset, batch_size=50, shuffle=True)
-        self.valid_loader = DataLoader(valid_dataset, batch_size=50, shuffle=False)
-        self.test_loader = DataLoader(test_dataset, batch_size=50, shuffle=False)
+        self.dataset = get_dataset(data_name)   # as a whole: to shuffle and split
+
+        train_dataset, valid_dataset, test_dataset = split_dataset(dataset)
+        self.train_loader = pyg.loader.DataLoader(
+            train_dataset, batch_size=50, shuffle=True, pin_memory=True)
+        self.valid_loader = pyg.loader.DataLoader(
+            valid_dataset, batch_size=50, shuffle=False, pin_memory=True)
+        self.test_loader = pyg.loader.DataLoader(
+            test_dataset, batch_size=50, shuffle=False, pin_memory=True)
 
 
-    def _init_model(self, data_name, net_name, num_epochs):
+    def _init_model(self, data_name, net_name, gpu_index, num_epochs):
         self.net = get_net(net_name, self.dataset)
-        self.device = torch.device('cuda:0' \
+        self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
 
@@ -45,15 +49,11 @@ class GraphClassifier():
     
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
+        self.log_interval = 1
         log_info = '%s-%s-%s-%d-%d-%s' % (
             algorithm_name, data_name, net_name, num_epochs, random_seed,
             time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
-        self.log_dir = os.path.join('./runs', log_info)
-        if not os.path.exists('./runs'): os.mkdir('./runs')
-        if not os.path.exists(self.log_dir): os.mkdir(self.log_dir)
-        else: print('The directory %s has already existed.' % (self.log_dir))
-
-        self.log_interval = 1
+        self.log_dir = create_log_dir(log_info)
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
 
 

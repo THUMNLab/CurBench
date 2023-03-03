@@ -1,4 +1,3 @@
-import os
 import argparse
 
 from curbench.algorithms import MinimaxTrainer
@@ -7,9 +6,9 @@ from curbench.algorithms import MinimaxTrainer
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
+parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--gpus', type=str, default='0')
 parser.add_argument('--schedule_epoch', type=int, default=20)
 parser.add_argument('--warm_epoch', type=int, default=5)
 parser.add_argument('--lam', type=float, default=1)
@@ -29,11 +28,11 @@ parser.add_argument('--fe_central_sum', type=bool, default=False)
 parser.add_argument('--num_classes', type=int, default=10)
 args = parser.parse_args()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 trainer = MinimaxTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
     schedule_epoch=args.schedule_epoch,

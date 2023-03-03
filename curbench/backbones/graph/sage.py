@@ -2,9 +2,9 @@ import torch.nn as nn
 from torch_geometric.nn import SAGEConv, global_mean_pool
 
 
-class Sage4Node(nn.Module):
+class SageForNode(nn.Module):
     def __init__(self, dataset, hidden_channels=16):
-        super(Sage4Node, self).__init__()
+        super(SageForNode, self).__init__()
         self.sage1 = SAGEConv(dataset.num_features, hidden_channels)
         self.sage2 = SAGEConv(hidden_channels, dataset.num_classes)
         self.relu = nn.ReLU()
@@ -20,9 +20,9 @@ class Sage4Node(nn.Module):
         return x
 
 
-class Sage4Graph(nn.Module):
+class SageForGraph(nn.Module):
     def __init__(self, dataset, hidden_channels=64):
-        super(Sage4Graph, self).__init__()
+        super(SageForGraph, self).__init__()
         self.sage1 = SAGEConv(dataset.num_features, hidden_channels)
         self.sage2 = SAGEConv(hidden_channels, hidden_channels)
         self.sage3 = SAGEConv(hidden_channels, hidden_channels)

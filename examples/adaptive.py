@@ -1,4 +1,3 @@
-import os
 import argparse
 
 from curbench.algorithms import BaseTrainer , AdaptiveTrainer
@@ -7,9 +6,9 @@ from curbench.algorithms import BaseTrainer , AdaptiveTrainer
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
+parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--gpus', type=str, default='0')
 parser.add_argument('--num_classes', type=int, default=10)
 parser.add_argument('--pace_p', type=float, default=0.1)
 parser.add_argument('--pace_q', type=float, default=1.2)
@@ -22,11 +21,11 @@ parser.add_argument('--bottom_gamma', type=float, default=0.1)
 parser.add_argument('--teacher_dir', type=str, default=None)
 args = parser.parse_args()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 pretrainer = BaseTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=42,
 )
