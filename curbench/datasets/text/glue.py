@@ -1,12 +1,11 @@
 import datasets
-from transformers import AutoTokenizer
 
 
 def get_glue_dataset(data_name):
     return datasets.load_dataset('glue', data_name)
 
 
-def convert_dataset(data_name, net_name, dataset):
+def convert_dataset(data_name, dataset, tokenizer):
 
     def convert_with_tokenizer(batch):
         # Either encode single sentence or sentence pairs
@@ -26,23 +25,9 @@ def convert_dataset(data_name, net_name, dataset):
         return features
 
     def convert_with_vocab(batch):
-        # TODO with torchtext.vocab
+        # TODO: with torchtext.vocab
         return batch
 
-
-    name_trans = {
-        'gpt': 'gpt2',
-        'bert': 'bert-base-uncased',
-    }
-    if net_name in name_trans:
-        net_name = name_trans[net_name]
-        tokenizer = AutoTokenizer.from_pretrained(net_name)
-        convert_fn = convert_with_tokenizer
-    elif net_name in ['lstm']:
-        # TODO
-        convert_fn = convert_with_vocab
-    else:
-        NotImplementedError()
 
     task_text_field_map = {
         'cola': ['sentence'],
@@ -70,7 +55,9 @@ def convert_dataset(data_name, net_name, dataset):
 
     updated_dataset = {}
     for key in dataset.keys():
-        updated_dataset[key] = dataset[key].map(convert_fn, batched=True, remove_columns=['label'])
+        updated_dataset[key] = dataset[key].map(
+            convert_with_tokenizer, batched=True, remove_columns=['label'],
+        )
         columns = [c for c in updated_dataset[key].column_names if c in loader_columns]
         updated_dataset[key].set_format(type="torch", columns=columns)
     return updated_dataset

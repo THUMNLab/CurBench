@@ -3,7 +3,7 @@ import time
 import torch
 import evaluate
 
-from ..datasets.text import get_dataset, convert_dataset
+from ..datasets.text import get_dataset, get_tokenizer, convert_dataset
 from ..backbones.text import get_net
 from ..utils import get_logger, set_random, create_log_dir
 
@@ -26,8 +26,9 @@ class TextClassifier():
 
     def _init_dataloader(self, data_name, net_name):
         self.dataset = get_dataset(data_name)     # dict: {train, valid, test}
+        self.tokenizer = get_tokenizer(net_name)
 
-        dataset = convert_dataset(data_name, net_name, self.dataset)
+        dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
         eval_splits = [x for x in dataset.keys() if 'validation' in x]
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, pin_memory=True)
@@ -44,15 +45,19 @@ class TextClassifier():
 
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
-        self.net = get_net(net_name, self.dataset)
+        self.net = get_net(net_name, self.dataset, self.tokenizer)
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=0.001)
+        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=2e-5)
         self.metric = evaluate.load('glue', data_name)
+        if self.net.num_labels == 1:    # data_name == 'stsb'
+            self.criterion = torch.nn.MSELoss()
+        else:
+            self.criterion = torch.nn.CrossEntropyLoss()
 
 
     def _init_logger(self, algorithm_name, data_name, 
@@ -72,23 +77,25 @@ class TextClassifier():
             t = time.time()
             total = 0
             train_loss = 0.0
-            predicts, labels = [], []
+            predictions, references = [], []
 
             self.net.train()
             for step, data in enumerate(self.train_loader):
-                inputs = {k: v.to(self.device) for k, v in data.items()}
+                inputs = {k: v.to(self.device) for k, v in data.items() if k != 'labels'}
+                labels = data['labels'].to(self.device)
 
                 self.optimizer.zero_grad()
-                loss, outputs = self.net(**inputs)[:2]
+                outputs = self.net(**inputs)[0]  # (loss), logits, (hidden_states), (attentions)
+                loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
 
-                train_loss += loss.item() * len(inputs['labels'])
-                total += len(inputs['labels'])
-                predicts += outputs.argmax(dim=1).tolist()
-                labels += inputs['labels'].tolist()
+                train_loss += loss.item() * len(labels)
+                total += len(labels)
+                predictions += outputs.argmax(dim=1).tolist()
+                references += labels.tolist()
             
-            train_acc = self.metric.compute(predictions=predicts, references=labels)['accuracy']
+            train_acc = self.metric.compute(predictions=predictions, references=references)['accuracy']
             self.logger.info(
                 '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, train_acc, train_loss / total, time.time() - t))
@@ -104,16 +111,17 @@ class TextClassifier():
             
 
     def _valid(self, loader):
-        predicts, labels = [], []
+        predictions, references = [], []
 
         self.net.eval()
         with torch.no_grad():
             for data in loader:
-                inputs = {k: v.to(self.device) for k, v in data.items()}
-                outputs = self.net(**inputs)[1]
-                predicts += outputs.argmax(dim=1).tolist()
-                labels += inputs['labels'].tolist()
-        return self.metric.compute(predictions=predicts, references=labels)['accuracy']
+                inputs = {k: v.to(self.device) for k, v in data.items() if k != 'labels'}
+                labels = data['labels'].to(self.device)
+                outputs = self.net(**inputs)[0]
+                predictions += outputs.argmax(dim=1).tolist()
+                references += labels.tolist()
+        return self.metric.compute(predictions=predictions, references=references)['accuracy']
 
 
     def fit(self):
