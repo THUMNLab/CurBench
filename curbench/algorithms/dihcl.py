@@ -148,7 +148,7 @@ class DIHCL(BaseCL):
 
 
 class DIHCLTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed,
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  warm_epoch, discount_factor, decay_rate, bottom_size,
                  type, sample_type, cei):
         
@@ -156,4 +156,4 @@ class DIHCLTrainer(BaseTrainer):
                  type, sample_type, cei)
 
         super(DIHCLTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

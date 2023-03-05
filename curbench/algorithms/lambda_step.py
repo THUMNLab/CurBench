@@ -69,10 +69,10 @@ class LambdaStep(BaseCL):
 
 
 class LambdaStepTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed, 
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, 
                  start_rate, grow_epochs, grow_fn, not_sorted=False):
         
         cl = LambdaStep(start_rate, grow_epochs, grow_fn, not_sorted)
         
         super(LambdaStepTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

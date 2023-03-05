@@ -49,10 +49,10 @@ class CBS(BaseCL):
 
 
 class CBSTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed,
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  kernel_size, start_std, grow_factor, grow_interval):
 
         cl = CBS(kernel_size, start_std, grow_factor, grow_interval)
 
         super(CBSTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

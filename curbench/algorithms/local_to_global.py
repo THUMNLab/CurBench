@@ -113,7 +113,7 @@ class LocalToGlobal(BaseCL):
 
 
 class LocalToGlobalTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed,
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  start_size, grow_size, grow_interval, strategy):
         
         if data_name.startswith('cifar10'):
@@ -122,4 +122,4 @@ class LocalToGlobalTrainer(BaseTrainer):
             raise NotImplementedError()
 
         super(LocalToGlobalTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

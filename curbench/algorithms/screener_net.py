@@ -87,9 +87,9 @@ class ScreenerNet(BaseCL):
 
 
 class ScreenerNetTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed):
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed):
         
         cl = ScreenerNet()
 
         super(ScreenerNetTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

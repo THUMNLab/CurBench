@@ -332,7 +332,7 @@ class RLTeacherSampling(BaseCL):
 
 
 class RLTeacherTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed, policy):
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, policy):
         
         cl_dict = {'online': RLTeacherOnline,
                    'naive': RLTeacherNaive,
@@ -341,4 +341,4 @@ class RLTeacherTrainer(BaseTrainer):
         cl = cl_dict[policy]()
 
         super(RLTeacherTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)

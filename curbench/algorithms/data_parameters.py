@@ -68,7 +68,7 @@ class DataParameters(BaseCL):
 
 
 class DataParametersTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, num_epochs, random_seed,
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  init_class_param, lr_class_param, wd_class_param, 
                  init_data_param, lr_data_param, wd_data_param):
         
@@ -78,7 +78,7 @@ class DataParametersTrainer(BaseTrainer):
             raise NotImplementedError()
         
         super(DataParametersTrainer, self).__init__(
-            data_name, net_name, num_epochs, random_seed, cl)
+            data_name, net_name, gpu_index, num_epochs, random_seed, cl)
 
 
 

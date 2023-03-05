@@ -29,7 +29,7 @@ class BaseCL():
 
         def __getitem__(self, index):
             data = self.dataset[index]
-            return [part for part in data] + [index]    # Attach data index.
+            return data + (index,)    # Attach data index.
 
         def __len__(self):
             return len(self.dataset)
