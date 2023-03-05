@@ -29,7 +29,6 @@ class TextClassifier():
         self.tokenizer = get_tokenizer(net_name)
 
         dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
-        print(dataset.keys())
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, pin_memory=True)
         if data_name == 'mnli':
