@@ -45,7 +45,6 @@ class TextClassifier():
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
         self.net = get_net(net_name, self.dataset, self.tokenizer)
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)
