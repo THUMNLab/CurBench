@@ -3,9 +3,9 @@ import time
 import torch
 import torch_geometric as pyg
 
-from ..datasets.graph import get_dataset
+from ..datasets.graph import get_dataset, split_dataset
 from ..backbones.graph import get_net
-from ..utils import get_logger, set_random
+from ..utils import get_logger, set_random, create_log_dir
 
 
 class GraphClassifier():
@@ -27,7 +27,7 @@ class GraphClassifier():
     def _init_dataloader(self, data_name):
         self.dataset = get_dataset(data_name)   # as a whole: to shuffle and split
 
-        train_dataset, valid_dataset, test_dataset = split_dataset(dataset)
+        train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
         self.train_loader = pyg.loader.DataLoader(
             train_dataset, batch_size=50, shuffle=True, pin_memory=True)
         self.valid_loader = pyg.loader.DataLoader(

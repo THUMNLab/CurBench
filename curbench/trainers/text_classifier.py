@@ -1,9 +1,8 @@
 import os
 import time
 import torch
-import evaluate
 
-from ..datasets.text import get_dataset, get_tokenizer, convert_dataset
+from ..datasets.text import get_dataset, get_tokenizer, get_metric, convert_dataset
 from ..backbones.text import get_net
 from ..utils import get_logger, set_random, create_log_dir
 
@@ -26,22 +25,22 @@ class TextClassifier():
 
     def _init_dataloader(self, data_name, net_name):
         self.dataset = get_dataset(data_name)     # dict: {train, valid, test}
+        self.metric, self.metric_name = get_metric(data_name)
         self.tokenizer = get_tokenizer(net_name)
 
         dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
-        eval_splits = [x for x in dataset.keys() if 'validation' in x]
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, pin_memory=True)
-        if len(eval_splits) == 1:
-            self.valid_loader = torch.utils.data.DataLoader(
-                dataset['validation'], batch_size=50, pin_memory=True)
-            self.test_loader = torch.utils.data.DataLoader(
-                dataset['test'], batch_size=50, pin_memory=True)
+        if data_name == 'mnli':
+            self.valid_loader = [torch.utils.data.DataLoader(
+                dataset[x], batch_size=50, pin_memory=True) for x in ['validation_matched', 'validation_mismatched']]
+            self.test_loader = [torch.utils.data.DataLoader(
+                dataset[x], batch_size=50, pin_memory=True) for x in ['test_matched', 'test_mismatched']]
         else:
             self.valid_loader = [torch.utils.data.DataLoader(
-                dataset[x], batch_size=50, pin_memory=True) for x in eval_splits]
+                dataset['validation'], batch_size=50, pin_memory=True)]
             self.test_loader = [torch.utils.data.DataLoader(
-                dataset[x], batch_size=50, pin_memory=True) for x in eval_splits]
+                dataset['test'], batch_size=50, pin_memory=True)]
 
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
@@ -52,8 +51,8 @@ class TextClassifier():
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=2e-5)
-        self.metric = evaluate.load('glue', data_name)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=1e-3)
+        # self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=2e-5)
         if self.net.num_labels == 1:    # data_name == 'stsb'
             self.criterion = torch.nn.MSELoss()
         else:
@@ -71,7 +70,7 @@ class TextClassifier():
 
 
     def _train(self):
-        best_acc = 0.0
+        best_metrics = [0.0] * len(self.valid_loader)
 
         for epoch in range(self.epochs):
             t = time.time()
@@ -85,29 +84,33 @@ class TextClassifier():
                 labels = data['labels'].to(self.device)
 
                 self.optimizer.zero_grad()
-                outputs = self.net(**inputs)[0]  # (loss), logits, (hidden_states), (attentions)
+                outputs = self.net(**inputs)[0]  # logits, (hidden_states), (attentions)
                 loss = self.criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
 
                 train_loss += loss.item() * len(labels)
                 total += len(labels)
-                predictions += outputs.argmax(dim=1).tolist()
                 references += labels.tolist()
+                if self.net.num_labels == 1:
+                    predictions += outputs.squeeze()
+                else:
+                    predictions += outputs.argmax(dim=1).tolist()
             
-            train_acc = self.metric.compute(predictions=predictions, references=references)['accuracy']
+            train_metric = self.metric.compute(predictions=predictions, references=references)[self.metric_name]
             self.logger.info(
-                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
-                % (epoch + 1, total, train_acc, train_loss / total, time.time() - t))
+                '[%3d]  Train data = %7d  Train %s = %.4f  Loss = %.4f  Time = %.2fs'
+                % (epoch + 1, total, self.metric_name, train_metric, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
-                valid_acc = self._valid(self.valid_loader)
-                if valid_acc > best_acc:
-                    best_acc = valid_acc
+                valid_metrics = [self._valid(valid_loader) for valid_loader in self.valid_loader]
+                if valid_metrics[0] > best_metrics[0]:   # for mnli, choose best acc in validation_matched
+                    best_metrics[0] = valid_metrics[0]
                     torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
-                self.logger.info(
-                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
-                    % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
+                for valid_loader, valid_metric, best_metric in zip(self.valid_loader, valid_metrics, best_metrics):
+                    self.logger.info(
+                        '[%3d]  Valid data = %7d  Valid %s = %.4f  Best Valid %s = %.4f' 
+                        % (epoch + 1, len(valid_loader.dataset), self.metric_name, valid_metric, self.metric_name, best_metric))
             
 
     def _valid(self, loader):
@@ -119,9 +122,12 @@ class TextClassifier():
                 inputs = {k: v.to(self.device) for k, v in data.items() if k != 'labels'}
                 labels = data['labels'].to(self.device)
                 outputs = self.net(**inputs)[0]
-                predictions += outputs.argmax(dim=1).tolist()
                 references += labels.tolist()
-        return self.metric.compute(predictions=predictions, references=references)['accuracy']
+                if self.net.num_labels == 1:
+                    predictions += outputs.squeeze()
+                else:
+                    predictions += outputs.argmax(dim=1).tolist()
+        return self.metric.compute(predictions=predictions, references=references)[self.metric_name]
 
 
     def fit(self):
@@ -131,10 +137,12 @@ class TextClassifier():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        valid_acc = self._valid(self.valid_loader)
-        test_acc = self._valid(self.test_loader)
-        self.logger.info('Best Valid Acc = %.4f and Final Test Acc = %.4f' % (valid_acc, test_acc))
-        return test_acc
+        for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
+            valid_metric = self._valid(valid_loader)
+            test_metric = self._valid(test_loader)
+            self.logger.info('Best Valid %s = %.4f and Final Test %s = %.4f' 
+                            % (self.metric_name, valid_metric, self.metric_name, test_metric))
+        return test_metric
 
 
     def export(self, net_dir=None):

@@ -4,9 +4,9 @@ from .sage import SageForNode, SageForGraph
 
 
 def get_net(net_name, dataset):
-    net_set = set(['gcn', 'gat', 'sage'])
-    assert net_name in net_set, \
-        'Assert Error: net_name should be in ' + str(list(net_set))
+    net_list = ['gcn', 'gat', 'sage']
+    assert net_name in net_list, \
+        'Assert Error: net_name should be in ' + str(net_list)
     
     dataset_name = dataset.__class__.__name__
     net_name = net_name.upper() + 'For' + dataset_name
