@@ -29,6 +29,7 @@ class TextClassifier():
         self.tokenizer = get_tokenizer(net_name)
 
         dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
+        print(dataset.keys())
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, pin_memory=True)
         if data_name == 'mnli':
@@ -105,7 +106,7 @@ class TextClassifier():
             if (epoch + 1) % self.log_interval == 0:
                 valid_metrics = [self._valid(valid_loader) for valid_loader in self.valid_loader]
                 if valid_metrics[0] > best_metrics[0]:   # for mnli, choose best acc in validation_matched
-                    best_metrics[0] = valid_metrics[0]
+                    best_metrics[:] = valid_metrics[:]
                     torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 for valid_loader, valid_metric, best_metric in zip(self.valid_loader, valid_metrics, best_metrics):
                     self.logger.info(

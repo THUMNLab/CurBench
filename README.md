@@ -33,7 +33,7 @@ ImageNet32: CurBench/data/imagenet32/train_data_batch_1, ...
 ### Graph
 **Planetoid** will be downloaded automatically and it consists of **Cora**, **CiteSeer**, **PubMed**.
 
-**TUDataset** will be downloaded automatically.
+**TUDataset** will be downloaded automatically and it consists of many datasets, among which we choose **NCI1**, **PROTEINS**, **COLLAB**, **DD**, **PTC_MR**, **IMDB-BINARY**.
 
 
 ## Quick Start
