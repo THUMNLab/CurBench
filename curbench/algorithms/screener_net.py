@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 import torch
 import torch.nn as nn
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 from torch.optim.sgd import SGD
 
 from .utils import VNet_, set_parameter
@@ -28,40 +28,36 @@ class ScreenerNet(BaseCL):
     def data_prepare(self, loader):
         super().data_prepare(loader)
 
-        self.trainData = DataLoader(self.dataset, self.batch_size, shuffle=True)
+        self.trainData = self._dataloader(self.dataset)
         self.iter = iter(self.trainData)
         self.weights = torch.zeros(self.data_size)
 
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        self.device = device
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
-        self.model = net.to(device)
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.weights = self.weights.to(self.device)
         
-        self.vnet_ = copy.deepcopy(self.model)
+        self.vnet_ = copy.deepcopy(self.net)
         self.linear = VNet_(self.catnum, 1).to(self.device)
         self.optimizer1 = SGD(self.vnet_.parameters(), lr=self.lr, weight_decay=0.01)
         self.optimizer2 = SGD(self.linear.parameters(), lr=self.lr, weight_decay=0.01)
 
 
-    def data_curriculum(self, loader):
-        self.model.train()
+    def data_curriculum(self):
+        self.net.train()
         self.vnet_.train()
         self.linear.train()   
         try:
             temp = next(self.iter)
         except StopIteration:
-            self.trainData = DataLoader(self.trainData.dataset, self.batch_size, shuffle=True)
+            self.trainData = self._dataloader(self.trainData.dataset)
             self.iter = iter(self.trainData)
             temp = next(self.iter)
         image, labels, indices = temp
         image = image.to(self.device)
         labels = labels.to(self.device)
         indices = indices.to(self.device)
-        l = self.criterion(self.model(image), labels)
+        l = self.criterion(self.net(image), labels)
         w = self.linear(self.vnet_(image))
         L = Variable(torch.zeros(1), requires_grad=True).to(self.device)
         for i, j in zip(l, w):
@@ -81,8 +77,8 @@ class ScreenerNet(BaseCL):
         return [[image, labels, indices]]
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        return torch.mean(criterion(outputs, labels) * self.weights[indices])
+    def loss_curriculum(self, outputs, labels, indices):
+        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 
 

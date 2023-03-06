@@ -22,7 +22,7 @@ pretrainer = BaseTrainer(
     net_name=args.net,
     gpu_index=args.gpu,
     num_epochs=args.epochs,
-    random_seed=42,
+    random_seed=args.seed,
 )
 if args.teacher_dir is None:
     pretrainer.fit()

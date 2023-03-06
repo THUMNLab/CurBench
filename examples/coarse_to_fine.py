@@ -10,7 +10,6 @@ parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--cluster_K', type=int, default=3)
-parser.add_argument('--num_classes', type=int, default=10)
 parser.add_argument('--teacher_dir', type=str, default=None)
 args = parser.parse_args()
 
@@ -20,7 +19,7 @@ pretrainer = BaseTrainer(
     net_name=args.net,
     gpu_index=args.gpu,
     num_epochs=args.epochs,
-    random_seed=42,
+    random_seed=args.seed,
 )
 if args.teacher_dir is None:
     pretrainer.fit()
@@ -34,7 +33,6 @@ trainer = CoarseToFineTrainer(
     num_epochs=args.epochs,
     random_seed=args.seed,
     cluster_K=args.cluster_K,
-    num_classes=args.num_classes,
     pretrained_net=teacher_net,
 )
 trainer.fit()

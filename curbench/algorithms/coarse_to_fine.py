@@ -1,7 +1,7 @@
 import math
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 from .base import BaseTrainer, BaseCL
 
@@ -12,43 +12,39 @@ class CoarseToFine(BaseCL):
     
     Coarse-to-Fine Curriculum Learning. https://arxiv.org/pdf/2106.04072
     """
-    def __init__(self, cluster_K, num_classes, pretrained_net):
+    def __init__(self, cluster_K, pretrained_net):
         super(CoarseToFine, self).__init__()
 
         self.name = 'coarse_to_fine'
 
         self.epoch = 0
         self.classify_cnt = 0
-        self.num_classes = num_classes
         self.cluster_K = cluster_K
-        
+        self.pretrained_model = pretrained_net
+
+
+    def data_prepare(self, loader):
+        super().data_prepare(loader)
+        self.dataloader = loader
+    
+
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
+
+        self.num_classes = self.net.num_labels
         self.confusion_matrix = torch.zeros(self.num_classes ** 2)
         self.confusion_matrix = self.confusion_matrix.reshape(self.num_classes, self.num_classes)
 
         if self.cluster_K > self.num_classes:
             raise ValueError("The number of clusters should not exceed the number of classes.")
 
-        self.pretrained_model = pretrained_net
-
-
-    def data_prepare(self, loader):
-        self.dataloader = loader
-        self.dataset = self.CLDataset(loader.dataset)
-        self.data_size = len(self.dataset)
-        self.batch_size = loader.batch_size
-        self.n_batches = (self.data_size - 1) // self.batch_size + 1
-    
-
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        self.device = device
         try:
-            self.classifier = net.layer1
+            self.classifier = self.net.layer1
         except:
             raise ValueError("net should have a linear classifier")
-        self.total_epoch = epochs
     
 
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         if self.epoch == 0:
             self._pretrain()
             self._affinity_clustering()
@@ -63,29 +59,28 @@ class CoarseToFine(BaseCL):
             else:
                 raise NotImplementedError()
             self.classify_cnt += 1
-        return super().data_curriculum(loader)
+        return super().data_curriculum()
     
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices):
         cluster_label = torch.Tensor([self.classify_labels[self.classify_tot - self.classify_cnt][labels[index]] for index in range(len(labels))])
         cluster_label = cluster_label.type(torch.LongTensor).to(self.device)
-        loss = torch.mean(criterion(outputs, cluster_label))
+        loss = torch.mean(self.criterion(outputs, cluster_label))
         return loss
     
 
     def _pretrain(self):
         # calculate confusion matrix
         
-        for step, data in enumerate(self.dataloader):
-            inputs = data[0].to(self.device)
-            labels = data[1].to(self.device)
-            with torch.no_grad():
+        with torch.no_grad():
+            for step, data in enumerate(self.dataloader):
+                inputs = data[0].to(self.device)
+                labels = data[1].to(self.device)
                 outputs = self.pretrained_model(inputs)
                 _, predicted = torch.max(outputs, dim=1)
                 for index in range(len(predicted)):
                     self.confusion_matrix[int(labels[index])][int(predicted[index])] += 1
                     
-        
         for index in range(self.num_classes):
             self.confusion_matrix[index][index] = 0
             confusion_sum = torch.sum(self.confusion_matrix[index])
@@ -154,15 +149,15 @@ class CoarseToFine(BaseCL):
     def _scheduler(self):
         self.schedule = np.array([0])
         for index in range(self.classify_tot):
-            self.schedule = np.append(self.schedule, np.floor(self.num_cluster[self.classify_tot - 1 - index] * self.total_epoch / np.sum(self.num_cluster)))
-        self.schedule[len(self.schedule) - 1] = self.total_epoch
+            self.schedule = np.append(self.schedule, np.floor(self.num_cluster[self.classify_tot - 1 - index] * self.epochs / np.sum(self.num_cluster)))
+        self.schedule[len(self.schedule) - 1] = self.epochs
 
 
 class CoarseToFineTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
-                 cluster_K, num_classes, pretrained_net):
+                 cluster_K, pretrained_net):
         
-        cl = CoarseToFine(cluster_K, num_classes, pretrained_net)
+        cl = CoarseToFine(cluster_K, pretrained_net)
 
         super(CoarseToFineTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

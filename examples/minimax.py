@@ -25,7 +25,6 @@ parser.add_argument('--fe_gsrow', type=bool, default=False)
 parser.add_argument('--fe_central_op', type=bool, default=True)
 parser.add_argument('--fe_central_min', type=bool, default=False)
 parser.add_argument('--fe_central_sum', type=bool, default=False)
-parser.add_argument('--num_classes', type=int, default=10)
 args = parser.parse_args()
 
 
@@ -51,7 +50,6 @@ trainer = MinimaxTrainer(
     fe_central_op=args.fe_central_op,
     fe_central_min=args.fe_central_min,
     fe_central_sum=args.fe_central_sum,
-    num_classes=args.num_classes,
 )
 trainer.fit()
 trainer.evaluate()

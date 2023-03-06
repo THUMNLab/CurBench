@@ -9,7 +9,6 @@ parser.add_argument('--net', type=str, default='lenet')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--num_classes', type=int, default=10)
 parser.add_argument('--pace_p', type=float, default=0.1)
 parser.add_argument('--pace_q', type=float, default=1.2)
 parser.add_argument('--pace_r', type=int, default=15)
@@ -27,7 +26,7 @@ pretrainer = BaseTrainer(
     net_name=args.net,
     gpu_index=args.gpu,
     num_epochs=args.epochs,
-    random_seed=42,
+    random_seed=args.seed,
 )
 if args.teacher_dir is None:
     pretrainer.fit()
@@ -40,7 +39,6 @@ trainer = AdaptiveTrainer(
     net_name=args.net,
     num_epochs=args.epochs,
     random_seed=args.seed,
-    num_classes=args.num_classes,
     pace_p=args.pace_p,
     pace_q=args.pace_q,
     pace_r=args.pace_r,

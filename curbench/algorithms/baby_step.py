@@ -1,5 +1,5 @@
 import random
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 
 from .base import BaseTrainer, BaseCL
 
@@ -41,7 +41,7 @@ class BabyStep(BaseCL):
             random.shuffle(self.data_indices)                   # Else shuffle data to simulate data sorting by difficulty.
 
 
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         """Measure difficulty and schedule training.
         
         Measure difficulty: Assume the data is sorted by difficulty.
@@ -54,7 +54,7 @@ class BabyStep(BaseCL):
         data_indices = self.data_indices[:data_size]            # Current indices of samples data.
 
         dataset = Subset(self.dataset, data_indices)
-        return DataLoader(dataset, self.batch_size, shuffle=True)
+        return self._dataloader(dataset)
 
 
     def _subset_grow(self):

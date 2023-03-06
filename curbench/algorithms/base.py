@@ -49,14 +49,13 @@ class BaseCL():
         self.name = 'base'
 
 
-    def _data_collate(self, dataset):
+    def _dataloader(self, dataset, shuffle=True):
         if self.loader_type is torchDataLoader:
-            loader = torchDataLoader(dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+            return torchDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle, pin_memory=True)
         elif self.loader_type is pygDataLoader:
-            loader = pygDataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+            return pygDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
         else:   # if there is any other loader class, add it
             raise NotImplementedError()
-        return loader
 
 
     def data_prepare(self, loader):
@@ -84,7 +83,7 @@ class BaseCL():
 
     def data_curriculum(self):
         """Measure data difficulty and schedule the training set."""
-        return self._data_collate(self.dataset)
+        return self._dataloader(self.dataset)
 
 
     def model_curriculum(self):

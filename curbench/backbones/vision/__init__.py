@@ -15,10 +15,10 @@ def get_net(net_name, data_name):
     assert net_name in net_dict, \
         'Assert Error: net_name should be in ' + str(list(net_dict.keys()))
 
-    classes_dict = {
+    labels_dict = {
         'cifar10': 10, 
         'cifar100': 100,
         'imagenet32': 1000,
     }
     
-    return net_dict[net_name](num_classes=classes_dict[data_name])
+    return net_dict[net_name](num_labels=labels_dict[data_name])

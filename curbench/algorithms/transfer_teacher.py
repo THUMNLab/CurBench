@@ -15,8 +15,7 @@ class TransferTeacher(SelfPaced):
         net: A pre-trained teacher net.
         data_loss: save the loss calculated by the teacher net.
     """
-    def __init__(self, start_rate, grow_epochs, 
-                 grow_fn, weight_fn, teacher_net):
+    def __init__(self, start_rate, grow_epochs, grow_fn, weight_fn, teacher_net):
         super(TransferTeacher, self).__init__(
             start_rate, grow_epochs, grow_fn, weight_fn)
 
