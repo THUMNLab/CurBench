@@ -28,7 +28,7 @@ class MetaReweight(BaseCL):
         valid_index = temp[:sample_size]
         train_index = temp[sample_size:]
         self.validationData = self._dataloader(Subset(self.dataset, valid_index), shuffle=False)
-        self.trainData = self._dataloader(Subset(self.dataset, train_index)s)
+        self.trainData = self._dataloader(Subset(self.dataset, train_index))
         self.iter = iter(self.trainData)
         self.iter2 = iter(self.validationData)
         self.weights = torch.zeros(self.data_size)
