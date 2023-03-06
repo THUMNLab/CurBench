@@ -35,7 +35,7 @@ class ClassImbalanced(Dataset):
         self.dominant_minor_floor = dominant_minor_floor
         self.exp_mu = exp_mu
         self.idx = []
-        counter = collections.Counter(self.dataset[:][1])
+        counter = collections.Counter([self.dataset[i][1] for i in range(len(self.dataset))])
 
         if self.mode == "dominant":
             # the labels are classifed into dominant label and minor label
@@ -55,10 +55,12 @@ class ClassImbalanced(Dataset):
             # the number of each class is altered according to an exponential function 
             # n = n_i * (`exp_mu` ^ i)
             # where i is the class index, and n_i is the original number for class i
-            nums = np.array([counter[key] * (exp_mu ** i)] for i, key in enumerate(sorted(counter.keys())))
+            nums = np.array([counter[key] * (exp_mu ** i) for i, key in enumerate(sorted(counter.keys()))])
             for i, (_, y) in enumerate(self.dataset):
                 if np.random.rand() < (nums[y] * 1.0 / counter[y]):
                     self.idx.append(i)
+        elif self.mode == "none":
+            self.idx = [i for i in range(len(self.dataset))]
         else:
             raise NotImplementedError()
     

@@ -10,7 +10,7 @@ from PIL import Image
 from torch.utils.data import Subset, Dataset
 from torchvision import transforms
 
-from .utils import Cutout, LabelNoise
+from .utils import Cutout, LabelNoise, ClassImbalanced
 
 
 class ImageNet32(Dataset):
@@ -89,7 +89,9 @@ class ImageNet32(Dataset):
 
 
 def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1, 
-                           augment=True, cutout_length=0, noise_ratio=0.0):
+                           augment=True, cutout_length=0, noise_ratio=0.0,
+                           imbalance_mode="none", imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
+                           imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
     
@@ -125,6 +127,10 @@ def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1,
 
     if noise_ratio > 0.0:
         train_dataset = LabelNoise(train_dataset, noise_ratio, 1000)
+    if imbalance_mode != "none":
+        train_dataset = ClassImbalanced(train_dataset, imbalance_mode, \
+            imbalance_dominant_labels, imbalance_dominant_ratio, imbalance_dominant_minor_floor,\
+                imbalance_exp_mu)
 
     return train_dataset, valid_dataset, test_dataset
 
