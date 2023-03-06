@@ -47,7 +47,7 @@ cd CurBench
 pip install -e .
 
 # 3. prepare dataset
-mkdir data
+ln -s /DATA/DATANAS1/zyw16/MMData data
 
 # 4. run the example code
 python examples/base.py
