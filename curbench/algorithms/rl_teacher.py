@@ -84,7 +84,7 @@ class RLTeacherOnline(BaseCL):
         self.reward = []
         for i in range(self.catnum):
             acc = 0
-            for (sample, label) in self.validationData[i]:
+            for (sample, label, indices) in self.validationData[i]:
                 sample = sample.to(self.device)
                 label = label.to(self.device)
                 out = self.net(sample)
@@ -143,7 +143,7 @@ class RLTeacherNaive(BaseCL):
         self.reward = []
         for i in range(self.catnum):
             acc = 0
-            for (sample, label) in self.validationData[i]:
+            for (sample, label, indices) in self.validationData[i]:
                 sample = sample.to(self.device)
                 label = label.to(self.device)
                 out = self.net(sample)
@@ -209,7 +209,7 @@ class RLTeacherWindow(BaseCL):
 
     def data_curriculum(self):
         acc = 0
-        for (sample, label) in self.validationData:
+        for (sample, label, indices) in self.validationData:
             sample = sample.to(self.device)
             label = label.to(self.device)
             out = self.net(sample)
@@ -270,7 +270,7 @@ class RLTeacherSampling(BaseCL):
         self.accs = []
         for i in range(self.partnum):
             acc = 0
-            for (sample, label) in self.data[i]:
+            for (sample, label, indices) in self.data[i]:
                 sample = sample.to(self.device)
                 label = label.to(self.device)
                 out = self.net(sample)

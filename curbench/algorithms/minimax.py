@@ -1,3 +1,4 @@
+import copy
 import math
 import numpy as np
 import torch
@@ -106,20 +107,22 @@ class Minimax(BaseCL):
             inputs = data[0].to(self.device)
             labels = data[1].to(self.device)
             self.optimizer.zero_grad()
-            outputs, _ = self.net(inputs)
-            loss = self.criterion(outputs, labels)
+            outputs = self.net(inputs)
+            loss = self.criterion(outputs, labels).mean()
             loss.backward()
             self.optimizer.step()
-        self.scheduler.step()
+        self.lr_scheduler.step()
     
 
     def _pretest(self, dataloader):
         all_feature = np.array([])
-        self.net.eval()
+        _net = copy.deepcopy(self.net)
+        _net.fc = nn.Identity()
+        _net.eval()
         for step, data in enumerate(dataloader):
             inputs = data[0].to(self.device)
             with torch.no_grad():
-                _, feature = self.net(inputs)
+                feature = _net(inputs)
             all_feature = np.append(all_feature, feature.cpu())
         all_feature = all_feature.reshape(int(self.data_size), int(len(all_feature) / self.data_size))
         return all_feature

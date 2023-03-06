@@ -16,12 +16,12 @@ class VGG(nn.Module):
         super(VGG, self).__init__()
         self.num_labels = num_labels
         self.features = self._make_layers(cfg[vgg_name])
-        self.classifier = nn.Linear(512, self.num_labels)
+        self.fc = nn.Linear(512, self.num_labels)
 
     def forward(self, x):
         out = self.features(x)
         out = out.view(out.size(0), -1)
-        out = self.classifier(out)
+        out = self.fc(out)
         return out
 
     def _make_layers(self, cfg):

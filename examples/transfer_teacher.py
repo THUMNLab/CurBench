@@ -33,6 +33,7 @@ teacher_net = pretrainer.export(args.teacher_dir)
 trainer = TransferTeacherTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
     start_rate=args.start_rate,

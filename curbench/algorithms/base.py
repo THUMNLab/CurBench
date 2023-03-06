@@ -51,7 +51,7 @@ class BaseCL():
 
     def _dataloader(self, dataset, shuffle=True):
         if self.loader_type is torchDataLoader:
-            return torchDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle, pin_memory=True)
+            return torchDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
         elif self.loader_type is pygDataLoader:
             return pygDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
         else:   # if there is any other loader class, add it
