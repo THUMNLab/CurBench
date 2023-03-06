@@ -21,7 +21,7 @@ class TransferTeacher(SelfPaced):
             start_rate, grow_epochs, grow_fn, weight_fn)
 
         self.name = 'transfer_teacher'
-        self.net = teacher_net
+        self.teacher_net = teacher_net
         self.data_loss = None
 
 

@@ -4,7 +4,7 @@ import torch
 
 from ..datasets.graph import get_dataset
 from ..backbones.graph import get_net
-from ..utils import get_logger, set_random
+from ..utils import set_random, create_log_dir, get_logger
 
 
 
@@ -26,6 +26,8 @@ class NodeClassifier():
 
     def _init_dataloader(self, data_name):
         self.dataset = get_dataset(data_name)
+        # self.dataset.__setattr__('dataset', self.dataset[0])
+        # TODO: for data_prepare
 
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
@@ -40,6 +42,7 @@ class NodeClassifier():
         self.optimizer = torch.optim.Adam(
             self.net.parameters(), lr=0.01, weight_decay=5e-4)
         
+        # TODO: model_prepare
     
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
@@ -54,6 +57,7 @@ class NodeClassifier():
     def _train(self):
         best_acc = 0.0
 
+        # TODO: data curriculum, model_curriculum and loss_curriculum
         for epoch in range(self.epochs):
             t = time.time()
             self.net.train()

@@ -27,7 +27,7 @@ class SelfPaced(BaseCL):
 
         self.name = 'self_paced'
         self.epoch = 0
-        self.net = None
+        self.teacher_net = None
 
         self.start_rate = start_rate
         self.grow_epochs = grow_epochs
@@ -37,8 +37,8 @@ class SelfPaced(BaseCL):
 
     def model_prepare(self, net, device, epochs, 
                       criterion, optimizer, lr_scheduler):
-        if self.net is None:                                    # In Self-Paced Learning, the network is itself.
-            self.net = net                                      # In Transfer Teacher, the network is teacher net.
+        if self.teacher_net is None:                            # In Self-Paced Learning, the network is itself.
+            self.teacher_net = net                              # In Transfer Teacher, the network is teacher net.
         self.device = device
         self.criterion = criterion
 
@@ -82,7 +82,7 @@ class SelfPaced(BaseCL):
 
     def _loss_measure(self):
         return torch.cat([self.criterion(
-            self.net(data[0].to(self.device)), data[1].to(self.device)).detach() 
+            self.teacher_net(data[0].to(self.device)), data[1].to(self.device)).detach() 
             for data in DataLoader(self.dataset, self.batch_size)])
 
 

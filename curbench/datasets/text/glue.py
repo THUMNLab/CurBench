@@ -5,7 +5,7 @@ def get_glue_dataset(data_name):
     return datasets.load_dataset('glue', data_name)
 
 
-def convert_dataset(data_name, dataset, tokenizer):
+def convert_dataset(data_name, dataset, tokenizer, max_length=128):
 
     def convert_with_tokenizer(batch):
         # Either encode single sentence or sentence pairs
@@ -16,8 +16,9 @@ def convert_dataset(data_name, dataset, tokenizer):
         # Tokenize the text/text pairs
         features = tokenizer.batch_encode_plus(
             texts_or_text_pairs,
-            padding=True,
+            padding='max_length',   # fix sequence length for shuffle sample
             truncation=True,
+            max_length=max_length,
             return_tensors='pt',
         )
         # Rename label to labels to make it easier to pass to model forward
