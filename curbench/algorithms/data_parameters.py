@@ -31,7 +31,7 @@ class DataParameters(BaseCL):
         )
         self.data_optimizer = SparseSGD([self.data_weights], 
             lr=self.lr_data_param, momentum=0.9, skip_update_zero_grad=True
-        )
+        ) # add weight decay at loss instead of here
         self.data_optimizer.zero_grad()
 
         self.class_weights = torch.tensor(
@@ -40,7 +40,7 @@ class DataParameters(BaseCL):
         )
         self.class_optimizer = SparseSGD([self.class_weights], 
             lr=self.lr_class_param, momentum=0.9, skip_update_zero_grad=True
-        )
+        ) # add weight decay at loss instead of here
         self.class_optimizer.zero_grad()
 
 
@@ -60,7 +60,7 @@ class DataParameters(BaseCL):
         class_weights = self.class_weights[labels]
         sigma = torch.exp(data_weights) + torch.exp(class_weights)
 
-        loss = self.criterion(outputs / sigma.view(-1, 1), labels)           \
+        loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
              + (0.5 * self.wd_data_param * data_weights ** 2).sum()     \
              + (0.5 * self.wd_class_param * class_weights ** 2).sum()
         return torch.mean(loss)

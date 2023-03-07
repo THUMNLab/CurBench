@@ -7,7 +7,7 @@ __pycache__
 /runs*
 
 *.log
-*.txt
 old*
 run.sh
 test.py
+record.txt

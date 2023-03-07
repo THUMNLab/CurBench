@@ -7,9 +7,25 @@ Actively under development by @THUMNLab
 
 ## Environment
 
-1. python >= 3.6
+1. python >= 3.7  
 
-2. pytorch >= 1.9.0
+    [https://www.python.org/downloads/](https://www.python.org/downloads/)
+
+2. pytorch >= 1.12
+
+    [https://pytorch.org/](https://pytorch.org/)
+
+3. torch_geometric
+
+    [https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html)
+
+4. other requirements
+
+```bash
+pip install -r requirements.txt 
+# for chinese user, if the download speed is slow, add:
+-i https://pypi.tuna.tsinghua.edu.cn/simple
+```
 
 
 ## Dataset
@@ -57,13 +73,13 @@ python examples/base.py
 ## Run
 ```bash
 # 1. vision standard
-python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpu <0/1/2/...>
+python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpu <0/1/2/>
 
 # 2. text standard
-python examples/base.py --data <cola/sst2> --net <lstm/bert/gpt> --gpu <0/1/2/...>
+python examples/base.py --data <rte/sst2/cola/> --net <lstm/bert/gpt> --gpu <0/1/2/>
 
 # 3. graph standard
-python examples/base.py --data <cora/nci1> --net <gcn/gat/sage> --gpu <0/1/2/...>
+python examples/base.py --data <nci1/ptc_mr/imdb-binary/> --net <gcn/gat/sage> --gpu <0/1/2/>
 ```
 
 
