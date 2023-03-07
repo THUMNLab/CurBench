@@ -13,7 +13,7 @@ from .utils import Cutout, LabelNoise, ClassImbalanced
 
 def get_cifar10_dataset(data_dir='data', valid_ratio=0.1,
                         augment=True, cutout_length=0, noise_ratio=0.0,
-                        imbalance_mode="none", imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
+                        imbalance_mode="none", imbalance_dominant_labels=None, imbalance_dominant_ratio=4.0,
                         imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
