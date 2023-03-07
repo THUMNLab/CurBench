@@ -7,7 +7,7 @@ def get_glue_dataset(data_name):
 
 def convert_dataset(data_name, dataset, tokenizer, 
                     noise_ratio=0.00,
-                    imbalance_mode='exp', imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
+                    imbalance_mode='none', imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
                     imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
 
     def convert_with_tokenizer(batch):
