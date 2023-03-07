@@ -23,8 +23,8 @@ class DataParameters(BaseCL):
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-
         self.class_size = self.net.num_labels
+        
         self.data_weights = torch.tensor(
             np.ones(self.data_size) * np.log(self.lr_data_param),
             dtype=torch.float32, requires_grad=True, device=self.device

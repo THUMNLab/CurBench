@@ -45,11 +45,11 @@ class Minimax(BaseCL):
     def data_prepare(self, loader):
         super().data_prepare(loader)
         self.dataloader = loader
+        
         if self.initial_size is None:
             self.siz = 0.1 * self.data_size
         else:
             self.siz = self.initial_size * self.data_size
-        
         self.loss = np.zeros(self.data_size)
         self.features = np.zeros(self.data_size)
         self.centrality = np.zeros(self.data_size)

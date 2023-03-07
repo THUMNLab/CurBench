@@ -43,7 +43,6 @@ class DDS(BaseCL):
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-        
         self.randomSplit()
 
 

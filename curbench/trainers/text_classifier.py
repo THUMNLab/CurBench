@@ -7,6 +7,7 @@ from ..backbones.text import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
 
+
 class TextClassifier():
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, algorithm_name, 
                  data_prepare, model_prepare, data_curriculum, model_curriculum, loss_curriculum):

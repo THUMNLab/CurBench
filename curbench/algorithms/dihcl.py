@@ -36,7 +36,6 @@ class DIHCL(BaseCL):
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-
         self.dih_loss = np.zeros(self.data_size)
         self.train_set = np.arange(self.data_size)
         self.probability = np.ones(self.data_size) / self.data_size
