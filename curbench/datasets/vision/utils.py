@@ -60,7 +60,7 @@ class ClassImbalanced(Dataset):
                 if np.random.rand() < (nums[y] * 1.0 / counter[y]):
                     self.idx.append(i)
         elif self.mode == "none":
-            self.idx = [i for i in range(len(self.dataset))]
+            self.idx = list(range(len(self.dataset)))
         else:
             raise NotImplementedError()
     

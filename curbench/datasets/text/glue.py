@@ -5,7 +5,10 @@ def get_glue_dataset(data_name):
     return datasets.load_dataset('glue', data_name)
 
 
-def convert_dataset(data_name, dataset, tokenizer, noise_ratio=0.01):
+def convert_dataset(data_name, dataset, tokenizer, 
+                    noise_ratio=0.00,
+                    imbalance_mode='exp', imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
+                    imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
 
     def convert_with_tokenizer(batch):
         # Either encode single sentence or sentence pairs
@@ -78,5 +81,9 @@ def convert_dataset(data_name, dataset, tokenizer, noise_ratio=0.01):
 
     if noise_ratio > 0.0:
         updated_dataset = LabelNoise(updated_dataset, noise_ratio, label_range, label_int)
+
+    if imbalance_mode != 'none':
+        updated_dataset = ClassImbalanced(updated_dataset, imbalance_mode, imbalance_dominant_labels,\
+            imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
 
     return updated_dataset
