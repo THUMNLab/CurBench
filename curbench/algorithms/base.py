@@ -39,6 +39,8 @@ class BaseCL():
                 data['indices'] = index         # e.g. data from glue
             elif isinstance(data, pygData):     # data from torch_geometric.datasets
                 data.__setattr__('i', index)    # e.g. data from tudataset
+            else:
+                NotImplementedError()
             return data
 
         def __len__(self):

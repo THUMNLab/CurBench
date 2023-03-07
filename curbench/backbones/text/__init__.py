@@ -12,7 +12,7 @@ def get_net(net_name, dataset, tokenizer):
         net_name = name_trans[net_name]
 
     vocab_size = len(tokenizer)
-    num_labels = dataset['train'].features['label'].num_labels
+    num_labels = dataset['train'].features['label'].num_classes
     if net_name == 'lstm':
         return LSTM(vocab_size, num_labels)
     else:
