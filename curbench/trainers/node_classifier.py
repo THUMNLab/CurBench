@@ -4,7 +4,7 @@ import torch
 
 from ..datasets.graph import get_dataset
 from ..backbones.graph import get_net
-from ..utils import get_logger, set_random
+from ..utils import get_logger, set_random, create_log_dir
 
 
 
