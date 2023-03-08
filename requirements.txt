@@ -1,16 +1,4 @@
-pickle
-PIL
-
-torch
-torchvision
-
-pyg_lib
-torch_scatter
-torch_sparse
-torch_cluster
-torch_spline_conv
-torch_geometric
-
+pillow
 transformers
 datasets
 evaluate
