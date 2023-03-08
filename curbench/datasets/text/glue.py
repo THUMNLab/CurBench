@@ -1,14 +1,10 @@
 import datasets
-from .utils import LabelNoise, ClassImbalanced
 
 def get_glue_dataset(data_name):
     return datasets.load_dataset('glue', data_name)
 
 
-def convert_dataset(data_name, dataset, tokenizer, 
-                    noise_ratio=0.00,
-                    imbalance_mode='none', imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
-                    imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
+def convert_dataset(data_name, dataset, tokenizer):
 
     def convert_with_tokenizer(batch):
         # Either encode single sentence or sentence pairs
@@ -45,21 +41,6 @@ def convert_dataset(data_name, dataset, tokenizer,
         'ax':   ['premise', 'hypothesis']
     }
     text_fields = task_text_field_map[data_name]
-    
-    task_text_label_range_map = {
-        'cola': [0, 1],
-        'sst2': [0, 1],
-        'mrpc': [0, 1],
-        'qqp':  [0, 1],
-        'stsb': [0, 5],
-        'mnli': [0, 2],
-        'qnli': [0, 1],
-        'rte':  [0, 1],
-        'wnli': [0, 1],
-        'ax':   [0, 1],
-    }
-    label_range = task_text_label_range_map[data_name]
-    label_int = False if data_name == 'stsb' else True
 
     loader_columns = [
         'datasets_idx',
@@ -78,12 +59,5 @@ def convert_dataset(data_name, dataset, tokenizer,
         )
         columns = [c for c in updated_dataset[key].column_names if c in loader_columns]
         updated_dataset[key].set_format(type="torch", columns=columns)
-
-    if noise_ratio > 0.0:
-        updated_dataset = LabelNoise(updated_dataset, noise_ratio, label_range, label_int)
-
-    if imbalance_mode != 'none':
-        updated_dataset = ClassImbalanced(updated_dataset, imbalance_mode, imbalance_dominant_labels,\
-            imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
 
     return updated_dataset
