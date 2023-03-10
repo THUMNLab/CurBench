@@ -2,7 +2,8 @@ import os
 import time
 import torch
 
-from ..datasets.text import get_dataset, get_tokenizer, get_metric, convert_dataset
+from ..datasets.text import get_dataset, get_tokenizer, get_metric, convert_dataset, \
+    get_dataset_with_noise, get_dataset_with_imbalanced_class
 from ..backbones.text import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
@@ -26,10 +27,19 @@ class TextClassifier():
 
     def _init_dataloader(self, data_name, net_name):
         self.dataset = get_dataset(data_name) # dict: {train, valid, test}
+        
         self.metric, self.metric_name = get_metric(data_name)
         self.tokenizer = get_tokenizer(net_name)
 
         dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
+        
+        # config = data_name + '-noise-0.4'
+        # dataset = get_dataset_with_noise(config, dataset)
+        
+        # config = data_name + '-imbalance-dominant-[0]-4-5-0.8'
+        # config = data_name + '-imbalance-exp-[0]-4-5-0.8'
+        # dataset = get_dataset_with_imbalanced_class(config, dataset)
+    
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, shuffle=True, pin_memory=True)
         if data_name == 'mnli':

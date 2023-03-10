@@ -31,14 +31,13 @@ task_text_label_range_map = {
     'ax':   [0, 1],
 }
 
-
 def get_dataset(data_name):
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
     return get_glue_dataset(data_name)
 
 
-def get_dataset_with_noise(data_name):
+def get_dataset_with_noise(data_name, dataset):
     if 'noise' in data_name:
         try:
             parts = data_name.split('-')
@@ -50,8 +49,7 @@ def get_dataset_with_noise(data_name):
             'Assert Error: noise ratio should be in range of [0.0, 1.0]'
     else:
         noise_ratio = 0.0
-    
-    dataset = get_dataset(data_name)
+
     if noise_ratio > 0.0:
         label_range = task_text_label_range_map[data_name]
         label_int = False if data_name == 'stsb' else True
@@ -59,7 +57,7 @@ def get_dataset_with_noise(data_name):
     return dataset
 
 
-def get_dataset_with_imbalanced_class(data_name):
+def get_dataset_with_imbalanced_class(data_name, dataset):
     if 'imbalance' in data_name:
         try:
             parts = data_name.split('-')
@@ -77,8 +75,7 @@ def get_dataset_with_imbalanced_class(data_name):
         imbalance_dominant_ratio = 1
         imbalance_dominant_minor_floor = 0
         imbalance_exp_mu = 1
-    
-    dataset = get_dataset(data_name)
+
     if imbalance_mode != 'none':
         dataset = ClassImbalanced(dataset, imbalance_mode, imbalance_dominant_labels,\
             imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)

@@ -14,6 +14,11 @@ class UtilDataset(SubDataset):
         self.use_labels = use_labels
         self.keys = self.dataset[0].keys()
         
+    def __getitem__(self, index):
+        res = self.dataset[self.idx[index]]    
+        res['labels'] = self.labels[self.idx[index]]
+        return res    
+
     def __getitems__(self, indexs):
         res = [{
             key: self.dataset[self.idx[index]][key] 
