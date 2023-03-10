@@ -127,7 +127,7 @@ class BaseTrainer():
             # 'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
 
             'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
-            'collab': GraphClassifier, 'dd': GraphClassifier, 'ptc_mr': GraphClassifier, 'imdb-binary': GraphClassifier,
+            'collab': GraphClassifier, 'dd': GraphClassifier, 'ptc_mr': GraphClassifier, 'imdb_binary': GraphClassifier,
         }
         assert data_name in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))

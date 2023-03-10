@@ -3,7 +3,7 @@ from .tudataset import get_tudataset_dataset, split_dataset
 from .utils import LabelNoise
 
 supported_datasets = [
-    'mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb-binary'
+    'mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb_binary'
 ]
 
 task_graph_label_range_map = {
@@ -13,14 +13,14 @@ task_graph_label_range_map = {
     'collab': [0, 2],
     'dd': [0, 1], 
     'ptc_mr': [0, 1],
-    'imdb-binary': [0, 1],
+    'imdb_binary': [0, 1],
 }
 
 def get_dataset(data_name):
     name_trans = {
         'cora': 'Cora', 'citeseer': 'CiteSeer', 'pubmed': 'PubMed',
         'mutag': 'MUTAG', 'nci1': 'NCI1', 'proteins': 'PROTEINS', 
-        'collab': 'COLLAB', 'dd': 'DD', 'ptc_mr': 'PTC_MR', 'imdb-binary': 'IMDB-BINARY',
+        'collab': 'COLLAB', 'dd': 'DD', 'ptc_mr': 'PTC_MR', 'imdb_binary': 'IMDB-BINARY',
     }
 
     if data_name in name_trans: 
