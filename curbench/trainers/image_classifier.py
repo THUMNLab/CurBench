@@ -2,7 +2,7 @@ import os
 import time
 import torch
 
-from ..datasets.vision import get_dataset_with_noise
+from ..datasets.vision import get_dataset_with_noise, get_dataset_with_imbalanced_class
 from ..backbones.vision import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
@@ -26,6 +26,10 @@ class ImageClassifier():
 
     def _init_dataloader(self, data_name):
         self.dataset = get_dataset_with_noise(data_name) # list: [train, valid, test]
+        
+        # data_name == 'cifar10-imbalance-dominant-[0]-4-5-0.8'
+        # data_name == 'cifar10-imbalance-exp-[0]-4-5-0.8'
+        # self.dataset = get_dataset_with_imbalanced_class(data_name)
         
         train_dataset, valid_dataset, test_dataset = self.dataset
         self.train_loader = torch.utils.data.DataLoader(
