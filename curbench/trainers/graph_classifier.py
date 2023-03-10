@@ -5,7 +5,8 @@ import torch_geometric as pyg
 
 from ..datasets.graph import get_dataset, split_dataset
 from ..backbones.graph import get_net
-from ..utils import get_logger, set_random, create_log_dir
+from ..utils import set_random, create_log_dir, get_logger
+
 
 
 class GraphClassifier():
@@ -25,7 +26,7 @@ class GraphClassifier():
 
 
     def _init_dataloader(self, data_name):
-        self.dataset = get_dataset(data_name)   # as a whole: to shuffle and split
+        self.dataset = get_dataset(data_name) # as a whole: to shuffle and split
 
         train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
         self.train_loader = pyg.loader.DataLoader(
@@ -35,6 +36,8 @@ class GraphClassifier():
         self.test_loader = pyg.loader.DataLoader(
             test_dataset, batch_size=50, shuffle=False, pin_memory=True)
 
+        self.data_prepare(self.train_loader)                            # curriculum part
+
 
     def _init_model(self, data_name, net_name, gpu_index, num_epochs):
         self.net = get_net(net_name, self.dataset)
@@ -43,9 +46,12 @@ class GraphClassifier():
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
+        self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
+        self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
 
+        self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
+            self.criterion, self.optimizer, self.lr_scheduler)
     
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
@@ -65,14 +71,18 @@ class GraphClassifier():
             correct = 0
             train_loss = 0.0
 
-            self.net.train()
-            for step, data in enumerate(self.train_loader):
+            loader = self.data_curriculum()                             # curriculum part
+            net = self.model_curriculum()                               # curriculum part
+
+            net.train()
+            for step, data in enumerate(loader):
                 inputs = data.to(self.device)
                 labels = data.y.to(self.device)
+                indices = data.i.to(self.device)
 
                 self.optimizer.zero_grad()
-                outputs = self.net(inputs)
-                loss = self.criterion(outputs, labels)
+                outputs = net(inputs)
+                loss = self.loss_curriculum(outputs, labels, indices)   # curriculum part
                 loss.backward()
                 self.optimizer.step()
 
@@ -89,7 +99,7 @@ class GraphClassifier():
                 valid_acc = self._valid(self.valid_loader)
                 if valid_acc > best_acc:
                     best_acc = valid_acc
-                    torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
+                    torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
                     '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))

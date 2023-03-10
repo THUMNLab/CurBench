@@ -1,5 +1,8 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset as torchDataset
+from torch.utils.data import DataLoader as torchDataLoader
+from torch_geometric.data.data import Data as pygData
+from torch_geometric.loader import DataLoader as pygDataLoader
 
 from ..trainers import *
 
@@ -18,7 +21,7 @@ class BaseCL():
         n_batches: An integer for the number of batches.
     """
 
-    class CLDataset(Dataset):
+    class CLDataset(torchDataset):
         """A dataset for CL Algorithm.
 
         It attaches the original training dataset with data index,
@@ -28,8 +31,17 @@ class BaseCL():
             self.dataset = dataset
 
         def __getitem__(self, index):
+            """Attach data index"""
             data = self.dataset[index]
-            return data + (index,)    # Attach data index.
+            if isinstance(data, tuple):         # data from torch.utils.data.Dataset
+                data = data + (index,)          # e.g. data from cifar, imagenet
+            elif isinstance(data, dict):        # data from datasets.arrow_dataset.Dataset
+                data['indices'] = index         # e.g. data from glue
+            elif isinstance(data, pygData):     # data from torch_geometric.datasets
+                data.__setattr__('i', index)    # e.g. data from tudataset
+            else:
+                NotImplementedError()
+            return data
 
         def __len__(self):
             return len(self.dataset)
@@ -39,11 +51,21 @@ class BaseCL():
         self.name = 'base'
 
 
+    def _dataloader(self, dataset, shuffle=True):
+        if self.loader_type is torchDataLoader:
+            return torchDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
+        elif self.loader_type is pygDataLoader:
+            return pygDataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
+        else:   # if there is any other loader class, add it
+            raise NotImplementedError()
+
+
     def data_prepare(self, loader):
         """Pass training data information from Model Trainer to CL Algorithm.
         
         Initiate the CLDataset and record training data attributes.
         """
+        self.loader_type = type(loader)
         self.dataset = self.CLDataset(loader.dataset)
         self.data_size = len(self.dataset)
         self.batch_size = loader.batch_size
@@ -53,22 +75,27 @@ class BaseCL():
     def model_prepare(self, net, device, epochs, 
                       criterion, optimizer, lr_scheduler):
         """Pass model information from Model Trainer to CL Algorithm."""
-        pass
+        self.net = net
+        self.device = device
+        self.epochs = epochs
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
 
 
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         """Measure data difficulty and schedule the training set."""
-        return DataLoader(self.dataset, self.batch_size, shuffle=True)
+        return self._dataloader(self.dataset)
 
 
-    def model_curriculum(self, net):
+    def model_curriculum(self):
         """Schedule the model changing."""
-        return net
+        return self.net
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices):
         """Reweight loss."""
-        return torch.mean(criterion(outputs, labels))
+        return torch.mean(self.criterion(outputs, labels))
 
 
 
@@ -95,11 +122,12 @@ class BaseTrainer():
             'cola': TextClassifier, 'sst2': TextClassifier, 'mrpc': TextClassifier, 'qqp': TextClassifier, 'stsb': TextClassifier, 
             'mnli': TextClassifier, 'qnli': TextClassifier, 'rte': TextClassifier, 'wnli': TextClassifier, 'ax': TextClassifier,
 
-            'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
+            # TODO: Since the data format of node classification is a graph, which can not be loaded as a dataloader,
+            # TODO: we may implement curriculum learning for it in the future.
+            # 'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
 
             'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
             'collab': GraphClassifier, 'dd': GraphClassifier, 'ptc_mr': GraphClassifier, 'imdb-binary': GraphClassifier,
-
         }
         assert data_name in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))

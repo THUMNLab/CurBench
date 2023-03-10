@@ -1,6 +1,6 @@
 from .base import BaseTrainer, BaseCL
 import torch
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 import numpy as np
 import torch.nn as nn
 from torch.optim.sgd import SGD
@@ -27,32 +27,25 @@ class MetaReweight(BaseCL):
         np.random.shuffle(temp)
         valid_index = temp[:sample_size]
         train_index = temp[sample_size:]
-        self.validationData = DataLoader(Subset(self.dataset, valid_index), self.batch_size, shuffle = False)
-        self.trainData = DataLoader(Subset(self.dataset, train_index), self.batch_size, shuffle = True)
+        self.validationData = self._dataloader(Subset(self.dataset, valid_index), shuffle=False)
+        self.trainData = self._dataloader(Subset(self.dataset, train_index))
         self.iter = iter(self.trainData)
         self.iter2 = iter(self.validationData)
-
         self.weights = torch.zeros(self.data_size)
 
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-
         self.randomSplit()
 
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        # super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        self.device = device
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
-        self.model = net.to(device)
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.weights = self.weights.to(self.device)
         
 
-    def data_curriculum(self, loader):
-        self.model.train()
+    def data_curriculum(self):
+        self.net.train()
         
         try:
             temp = next(self.iter)
@@ -72,7 +65,7 @@ class MetaReweight(BaseCL):
         image = image.to(self.device)
         labels = labels.to(self.device)
         indices = indices.to(self.device)
-        pseudonet = copy.deepcopy(self.model)
+        pseudonet = copy.deepcopy(self.net)
         out = pseudonet(image)
         loss = self.criterion(out, labels)
         eps = nn.Parameter(torch.zeros(loss.size())).to(self.device)
@@ -108,8 +101,8 @@ class MetaReweight(BaseCL):
         return [[image, labels, indices]]
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        return torch.mean(criterion(outputs, labels) * self.weights[indices])
+    def loss_curriculum(self, outputs, labels, indices):
+        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 
 

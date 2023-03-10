@@ -12,15 +12,16 @@ cfg = {
 
 
 class VGG(nn.Module):
-    def __init__(self, vgg_name, num_classes=10):
+    def __init__(self, vgg_name, num_labels=10):
         super(VGG, self).__init__()
+        self.num_labels = num_labels
         self.features = self._make_layers(cfg[vgg_name])
-        self.classifier = nn.Linear(512, num_classes)
+        self.fc = nn.Linear(512, self.num_labels)
 
     def forward(self, x):
         out = self.features(x)
         out = out.view(out.size(0), -1)
-        out = self.classifier(out)
+        out = self.fc(out)
         return out
 
     def _make_layers(self, cfg):
@@ -38,20 +39,20 @@ class VGG(nn.Module):
         return nn.Sequential(*layers)
 
 
-def VGG11(num_classes=10):
-    return VGG('VGG11', num_classes=num_classes)
+def VGG11(num_labels=10):
+    return VGG('VGG11', num_labels=num_labels)
 
 
-def VGG13(num_classes=10):
-    return VGG('VGG13', num_classes=num_classes)
+def VGG13(num_labels=10):
+    return VGG('VGG13', num_labels=num_labels)
 
 
-def VGG16(num_classes=10):
-    return VGG('VGG16', num_classes=num_classes)
+def VGG16(num_labels=10):
+    return VGG('VGG16', num_labels=num_labels)
 
 
-def VGG19(num_classes=10):
-    return VGG('VGG19', num_classes=num_classes)
+def VGG19(num_labels=10):
+    return VGG('VGG19', num_labels=num_labels)
 
 
 def test():

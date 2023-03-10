@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 
 from .base import BaseTrainer, BaseCL
 
@@ -12,39 +12,31 @@ class LocalToGlobal(BaseCL):
     
     Local to global learning: Gradually adding classes for training deep neural networks. http://openaccess.thecvf.com/content_CVPR_2019/papers/Cheng_Local_to_Global_Learning_Gradually_Adding_Classes_for_Training_Deep_CVPR_2019_paper.pdf
     """
-    def __init__(self, class_size, start_size, 
-                 grow_size, grow_interval, strategy):
+    def __init__(self, start_size, grow_size, grow_interval, strategy):
         super(LocalToGlobal, self).__init__()
 
         self.name = 'local_to_global'
         self.epoch = 0
         self.classes = np.array([], dtype=int)
 
-        self.class_size = class_size
         self.start_size = start_size
         self.grow_size = grow_size
         self.grow_interval = grow_interval
         self.strategy = strategy
 
 
-    def data_prepare(self, loader):
-        super().data_prepare(loader)
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
+        self.class_size = self.net.num_labels
+        self.init_scheduler_state = self.lr_scheduler.state_dict()
+        # TODO: update T_max of lr_scheduler
 
         self.class_indices = [[] for _ in range(self.class_size)]
         for _, label, index in self.dataset:
             self.class_indices[label].append(index)
 
 
-    def model_prepare(self, net, device, epochs, 
-                      criterion, optimizer, lr_scheduler):
-        self.net = net
-        self.device = device
-        self.lr_scheduler = lr_scheduler
-        self.init_optimizer = self.lr_scheduler.state_dict()
-        # TODO: update T_max of lr_scheduler
-
-
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         self.epoch += 1
 
         class_size = min(self.class_size, self._subclass_grow())
@@ -78,17 +70,17 @@ class LocalToGlobal(BaseCL):
                 self.label_indices.extend(self.class_indices[label])
 
         dataset = Subset(self.dataset, self.label_indices)
-        return DataLoader(dataset, self.batch_size, shuffle=True)
+        return self._dataloader(dataset)
 
 
-    def model_curriculum(self, net):
+    def model_curriculum(self):
         if (self.epoch - 1) % self.grow_interval == 0:
-            self.lr_scheduler.load_state_dict(self.init_optimizer)
-        return net
+            self.lr_scheduler.load_state_dict(self.init_scheduler_state)
+        return self.net
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        return torch.mean(criterion(outputs[:, self.classes], self._label_map(labels)))
+    def loss_curriculum(self, outputs, labels, indices):
+        return torch.mean(self.criterion(outputs[:, self.classes], self._label_map(labels)))
 
     
     def _subclass_grow(self):
@@ -97,7 +89,7 @@ class LocalToGlobal(BaseCL):
 
     def _similarity_measure(self, label):
         dataset = Subset(self.dataset, self.class_indices[label])
-        loader = DataLoader(dataset, self.batch_size)
+        loader = self._dataloader(dataset)
         entropy = 0.0
         for data in loader:
             outputs = self.net(data[0].to(self.device))
@@ -116,10 +108,7 @@ class LocalToGlobalTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  start_size, grow_size, grow_interval, strategy):
         
-        if data_name.startswith('cifar10'):
-            cl = LocalToGlobal(10, start_size, grow_size, grow_interval, strategy)
-        else:
-            raise NotImplementedError()
+        cl = LocalToGlobal(start_size, grow_size, grow_interval, strategy)
 
         super(LocalToGlobalTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

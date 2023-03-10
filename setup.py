@@ -11,18 +11,15 @@ setuptools.setup(
     description="Curriculum Learning Benchmark",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/THUMNLab/CurBench",
+    url="https://github.com/zhouyw16/CurBench",
     project_urls={
-        "Bug Tracker": "https://github.com/THUMNLab/CurBench",
+        "Bug Tracker": "https://github.com/zhouyw16/CurBench",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License"
     ],
     packages=setuptools.find_packages(exclude=("tests", "examples", "docs")),
-    python_requires=">=3.6",
-    install_requires=[
-        'torch',
-        'torchvision',
-    ],
+    python_requires=">=3.7",
+    install_requires=[],
 )

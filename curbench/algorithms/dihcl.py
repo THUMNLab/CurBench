@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import Subset
 
 from .base import BaseTrainer, BaseCL
 
@@ -36,20 +36,14 @@ class DIHCL(BaseCL):
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-
         self.dih_loss = np.zeros(self.data_size)
         self.train_set = np.arange(self.data_size)
         self.probability = np.ones(self.data_size) / self.data_size
         self.old_loss = np.zeros(self.data_size)
         self.data_index = np.zeros(self.data_size)
-
-
-    def model_prepare(self, net, device, epochs, 
-                      criterion, optimizer, lr_scheduler):
-        self.lr_scheduler = lr_scheduler
     
 
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         self.cnt = 0
         self.epoch += 1
         if self.epoch > 1:
@@ -68,7 +62,7 @@ class DIHCL(BaseCL):
             )
 
         dataset = Subset(self.dataset, self.train_set)
-        return DataLoader(dataset, self.batch_size, shuffle=False)
+        return self._dataloader(dataset, shuffle=False)
 
 
     def _probability_regularize(self):
@@ -93,8 +87,8 @@ class DIHCL(BaseCL):
         self.probability /= np.sum(self.probability)
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        losses = criterion(outputs, labels)
+    def loss_curriculum(self, outputs, labels, indices):
+        losses = self.criterion(outputs, labels)
         self.epoch_lr = self.lr_scheduler.get_last_lr()[0]
         if self.type == 'prediction_flip':
             cnt = 0

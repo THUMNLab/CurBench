@@ -4,7 +4,7 @@ import copy
 
 import torch
 import torch.nn as nn
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 from torch.optim.sgd import SGD
 import numpy as np
 
@@ -19,7 +19,6 @@ class MetaWeightNet(BaseCL):
     """
     def __init__(self, ):
         super(MetaWeightNet, self).__init__()
-
         self.name = 'meta_weight_net'
 
 
@@ -30,49 +29,44 @@ class MetaWeightNet(BaseCL):
         np.random.shuffle(temp)
         valid_index = temp[:sample_size]
         train_index = temp[sample_size:]
-        self.validationData = DataLoader(Subset(self.dataset, valid_index), self.batch_size, shuffle = False)
-        self.trainData = DataLoader(Subset(self.dataset, train_index), self.batch_size, shuffle = True)
+        self.validationData = self._dataloader(Subset(self.dataset, valid_index), shuffle=False)
+        self.trainData = self._dataloader(Subset(self.dataset, train_index))
         self.iter = iter(self.trainData)
         self.iter2 = iter(self.validationData)
-
         self.weights = torch.zeros(self.data_size)
        
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-        
         self.randomSplit()
 
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        self.device = device
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.vnet = VNet(1, 100, 1).to(self.device)
-        self.model = net.to(device)
+        self.net = net.to(device)
         self.weights = self.weights.to(self.device)
 
 
-    def data_curriculum(self, loader):    
-        self.model.train()
+    def data_curriculum(self):    
+        self.net.train()
         try:
             temp = next(self.iter)
         except StopIteration:
-            self.trainData = DataLoader(self.trainData.dataset, self.batch_size, shuffle=True)
+            self.trainData = self._dataloader(self.trainData.dataset)
             self.iter = iter(self.trainData)
             temp = next(self.iter)
         try:
             temp2 = next(self.iter2)
         except StopIteration:
-            self.validationData = DataLoader(self.validationData.dataset, self.batch_size, shuffle=True)
+            self.validationData = self._dataloader(self.validationData.dataset)
             self.iter2 = iter(self.validationData)
             temp2 = next(self.iter2)
         image, labels, indices = temp
         image = image.to(self.device)
         labels = labels.to(self.device)
         indices = indices.to(self.device)
-        pseudonet = copy.deepcopy(self.model)
+        pseudonet = copy.deepcopy(self.net)
         out = pseudonet(image)
         loss = self.criterion(out, labels)
         loss = loss.reshape(-1, 1)
@@ -117,8 +111,8 @@ class MetaWeightNet(BaseCL):
         return [[image, labels, indices]]
     
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        return torch.mean(criterion(outputs, labels) * self.weights[indices])
+    def loss_curriculum(self, outputs, labels, indices):
+        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 
 

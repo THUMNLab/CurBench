@@ -20,13 +20,8 @@ class Superloss(BaseCL):
         self.fac = fac
 
 
-    def model_prepare(self, net, device, epochs, 
-                      criterion, optimizer, lr_scheduler):
-        self.device = device
-
-
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        loss = criterion(outputs, labels)
+    def loss_curriculum(self, outputs, labels, indices):
+        loss = self.criterion(outputs, labels)
         origin_loss = loss.detach().cpu().numpy()
 
         if self.fac > 0.0:

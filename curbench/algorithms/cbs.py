@@ -24,18 +24,14 @@ class CBS(BaseCL):
         self.grow_interval = grow_interval
         
 
-    def model_prepare(self, net, device, epochs, 
-                      criterion, optimizer, lr_scheduler):
-        self.net = net
-        self.device = device
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         for name, module in list(self.net.named_modules()):
             if isinstance(module, nn.Conv2d):
-                self.net._modules[name] = \
-                    KernelConv2d(module, self.kernel_size, self.std)
-        self.net.to(self.device)
+                self.net._modules[name] = KernelConv2d(module, self.kernel_size, self.std)
 
 
-    def model_curriculum(self, net):
+    def model_curriculum(self):
         self.epoch += 1
 
         if self.epoch > 1 and (self.epoch - 1) % self.grow_interval == 0:

@@ -4,7 +4,7 @@ import copy
 
 import torch
 import torch.nn as nn
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 from torch.optim.sgd import SGD
 import numpy as np
 
@@ -33,8 +33,8 @@ class DDS(BaseCL):
         np.random.shuffle(temp)
         valid_index = temp[:sample_size]
         train_index = temp[sample_size:]
-        self.validationData = DataLoader(Subset(self.dataset, valid_index), self.batch_size, shuffle = False)
-        self.trainData = DataLoader(Subset(self.dataset, train_index), self.batch_size, shuffle = True)
+        self.validationData = self._dataloader(Subset(self.dataset, valid_index), shuffle=False)
+        self.trainData = self._dataloader(Subset(self.dataset, train_index))
         self.iter1 = iter(self.trainData)
         self.iter2 = iter(self.validationData)
 
@@ -43,33 +43,26 @@ class DDS(BaseCL):
 
     def data_prepare(self, loader):
         super().data_prepare(loader)
-        
         self.randomSplit()
 
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        # super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        self.device = device
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
-        self.model = net.to(device)
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.weights = self.weights.to(self.device)
-
-        self.last_net = copy.deepcopy(self.model)
-        self.vnet_ = copy.deepcopy(self.model)
+        self.last_net = copy.deepcopy(self.net)
+        self.vnet_ = copy.deepcopy(self.net)
         self.linear = VNet_(self.catnum, 1).to(self.device)
         self.image, self.label, self.indices = next(self.iter1)
 
 
-    def data_curriculum(self, loader):
-        self.model.train()
+    def data_curriculum(self):
+        self.net.train()
         self.vnet_.train()
         self.linear.train()
         try:
             temp2 = next(self.iter2)
         except StopIteration:
-            self.validationData = DataLoader(self.validationData.dataset, self.batch_size, shuffle=True)
+            self.validationData = self._dataloader(self.validationData.dataset)
             self.iter2 = iter(self.validationData)
             temp2 = next(self.iter2)
 
@@ -86,11 +79,11 @@ class DDS(BaseCL):
         image2, labels2, indices2 = temp2
         image2 = image2.to(self.device)
         labels2 = labels2.to(self.device)
-        out2 = self.model(image2)
+        out2 = self.net(image2)
         loss2 = self.criterion(out2, labels2)
         totalloss2 = torch.mean(loss2)
-        self.model.zero_grad()
-        grad = torch.autograd.grad(totalloss2, self.model.parameters(), create_graph=True, retain_graph=True)
+        self.net.zero_grad()
+        grad = torch.autograd.grad(totalloss2, self.net.parameters(), create_graph=True, retain_graph=True)
 
         for (name, parameter), j in zip(self.last_net.named_parameters(), grad):
             parameter.detach_()
@@ -120,12 +113,12 @@ class DDS(BaseCL):
         del grad1
         del grad2
         del self.last_net
-        self.last_net = copy.deepcopy(self.model)
+        self.last_net = copy.deepcopy(self.net)
 
         try:
             temp = next(self.iter1)
         except StopIteration:
-            self.trainData = DataLoader(self.trainData.dataset, self.batch_size, shuffle=True)
+            self.trainData = self._dataloader(self.trainData.dataset)
             self.iter1 = iter(self.trainData)
             temp = next(self.iter1)
         a, b, i = temp
@@ -157,8 +150,8 @@ class DDS(BaseCL):
         return [[a, b, i]]
 
 
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        return torch.mean(criterion(outputs, labels) * self.weights[indices])
+    def loss_curriculum(self, outputs, labels, indices):
+        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 
 

@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset
 from .base import BaseTrainer, BaseCL
 
 
@@ -11,7 +11,7 @@ class Adaptive(BaseCL):
     
     Adaptive Curriculum Learning. https://openaccess.thecvf.com/content/ICCV2021/papers/Kong_Adaptive_Curriculum_Learning_ICCV_2021_paper.pdf
     """
-    def __init__(self, num_classes, pace_p, pace_q, pace_r, inv,
+    def __init__(self, pace_p, pace_q, pace_r, inv,
                  alpha, gamma, gamma_decay, bottom_gamma, pretrained_net):
         super(Adaptive, self).__init__()
 
@@ -28,26 +28,15 @@ class Adaptive(BaseCL):
         self.gamma = gamma
         self.gamma_decay = gamma_decay
         self.bottom_gamma = bottom_gamma
-        self.num_classes = num_classes
         self.pretrained_model = pretrained_net
 
 
     def data_prepare(self, loader):
+        super().data_prepare(loader)
         self.dataloader = loader
-        self.dataset = self.CLDataset(loader.dataset)
-        self.data_size = len(self.dataset)
-        self.batch_size = loader.batch_size
-        self.n_batches = (self.data_size - 1) // self.batch_size + 1
-
-
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
-        self.device = device
-        self.model = net
-        self.critertion = criterion
-        self.total_epoch = epochs
     
 
-    def data_curriculum(self, loader):
+    def data_curriculum(self):
         if self.epoch == 0:
             self.pretrained_model.to(self.device)
             self.difficulty = torch.Tensor().to(self.device)
@@ -66,7 +55,7 @@ class Adaptive(BaseCL):
         data_sort = torch.argsort(self.difficulty)
         self.data_indice = data_sort[0 : self.epoch_size]
         dataset = Subset(self.dataset, self.data_indice)
-        dataloader = DataLoader(dataset, self.batch_size, shuffle=False)
+        dataloader = self._dataloader(dataset, shuffle=False)
 
         if self.epoch % self.inv == 0:
             self._difficulty_measurer()
@@ -78,8 +67,8 @@ class Adaptive(BaseCL):
         return dataloader
         
     
-    def loss_curriculum(self, criterion, outputs, labels, indices):
-        losses = torch.mean(criterion(outputs, labels))
+    def loss_curriculum(self, outputs, labels, indices):
+        losses = torch.mean(self.criterion(outputs, labels))
         epoch_pretrained_output = torch.Tensor().to(self.device)
         for indice in self.data_indice[self.cnt : (self.cnt + self.batch_size)]:
             epoch_pretrained_output = torch.cat((epoch_pretrained_output, self.pretrained_output[int(indice)]), 0)
@@ -121,11 +110,11 @@ class Adaptive(BaseCL):
 
 class AdaptiveTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
-                 num_classes, pace_p, pace_q, pace_r, inv,
-                 alpha, gamma, gamma_decay, bottom_gamma, pretrained_net):
+                 pace_p, pace_q, pace_r, inv, alpha, gamma, gamma_decay, 
+                 bottom_gamma, pretrained_net):
         
-        cl = Adaptive(num_classes, pace_p, pace_q, pace_r, inv,
-                 alpha, gamma, gamma_decay, bottom_gamma, pretrained_net)
+        cl = Adaptive(pace_p, pace_q, pace_r, inv, alpha, 
+                      gamma, gamma_decay, bottom_gamma, pretrained_net)
 
         super(AdaptiveTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

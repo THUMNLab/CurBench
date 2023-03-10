@@ -154,15 +154,16 @@ class Head(nn.Sequential):
 
 
 class RelViT(nn.Sequential):
-    def __init__(self, num_classes, image_size=32, channels=256, head_channels=32, num_blocks=8, patch_size=2,
+    def __init__(self, num_labels, image_size=32, channels=256, head_channels=32, num_blocks=8, patch_size=2,
                  in_channels=3, emb_p_drop=0., trans_p_drop=0., head_p_drop=0.3):
         reduced_size = image_size // patch_size
         shape = (reduced_size, reduced_size)
         super().__init__(
             ToEmbedding(in_channels, channels, patch_size, shape, emb_p_drop),
             TransformerStack(num_blocks, channels, head_channels, shape, trans_p_drop),
-            Head(channels, num_classes, head_p_drop)
+            Head(channels, num_labels, head_p_drop)
         )
+        self.num_labels = num_labels
         self.reset_parameters()
     
     def reset_parameters(self):
@@ -210,7 +211,7 @@ class RelViT(nn.Sequential):
         return parameters_decay, parameters_no_decay
 
 
-# model = RelViT(NUM_CLASSES, IMAGE_SIZE, channels=256, head_channels=32, num_blocks=8, patch_size=2, emb_p_drop=0., trans_p_drop=0., head_p_drop=0.3)
+# model = RelViT(NUM_LABELS, IMAGE_SIZE, channels=256, head_channels=32, num_blocks=8, patch_size=2, emb_p_drop=0., trans_p_drop=0., head_p_drop=0.3)
 # def get_optimizer(model, learning_rate, weight_decay):
 #     param_dict = {pn: p for pn, p in model.named_parameters()}
 #     parameters_decay, parameters_no_decay = model.separate_parameters()
