@@ -51,10 +51,7 @@ def get_dataset_with_noise(data_name):
     else:
         noise_ratio = 0.0
     
-    assert data_name in data_dict, \
-        'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    
-    dataset = get_glue_dataset(data_name)
+    dataset = get_dataset(data_name)
     if noise_ratio > 0.0:
         label_range = task_text_label_range_map[data_name]
         label_int = False if data_name == 'stsb' else True
@@ -81,10 +78,7 @@ def get_dataset_with_imbalanced_class(data_name):
         imbalance_dominant_minor_floor = 0
         imbalance_exp_mu = 1
     
-    assert data_name in data_dict, \
-        'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    
-    dataset = get_glue_dataset(data_name)
+    dataset = get_dataset(data_name)
     if imbalance_mode != 'none':
         dataset = ClassImbalanced(dataset, imbalance_mode, imbalance_dominant_labels,\
             imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
