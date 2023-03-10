@@ -3,7 +3,7 @@ import time
 import torch
 import torch_geometric as pyg
 
-from ..datasets.graph import get_dataset, split_dataset, get_dataset_with_noise
+from ..datasets.graph import get_dataset, split_dataset, get_dataset_with_noise, get_dataset_with_imbalanced_class
 from ..backbones.graph import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
@@ -26,12 +26,17 @@ class GraphClassifier():
 
 
     def _init_dataloader(self, data_name):
-        # self.dataset = get_dataset(data_name) # as a whole: to shuffle and split
-        # train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
+        self.dataset = get_dataset(data_name) # as a whole: to shuffle and split
+        train_dataset, valid_dataset, test_dataset = split_dataset(self.dataset)
         
         # noise should be implemented on train_dataset, so maybe `split_dataset` should be capsulated into `get_dataset_with_noise` 
-        data_name += '-noise-0.4'
-        self.dataset, train_dataset, valid_dataset, test_dataset = get_dataset_with_noise(data_name)
+        # data_name += '-noise-0.4'
+        # self.dataset, train_dataset, valid_dataset, test_dataset = get_dataset_with_noise(data_name)
+        
+        # data_name += '-imbalance-dominant-[0]-4-5-0.8'
+        # data_name += '-imbalance-exp-[0]-4-5-0.8'
+        # self.dataset, train_dataset, valid_dataset, test_dataset = get_dataset_with_imbalanced_class(data_name)
+        
         self.train_loader = pyg.loader.DataLoader(
             train_dataset, batch_size=50, shuffle=True, pin_memory=True)
         self.valid_loader = pyg.loader.DataLoader(
