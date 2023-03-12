@@ -16,13 +16,12 @@ class Minimax(BaseCL):
     
     Minimax curriculum learning: Machine teaching with desirable difficulties and scheduled diversity. https://openreview.net/pdf?id=BywyFQlAW
     """
-    def __init__(self, data_name, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
+    def __init__(self, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
         super(Minimax, self).__init__()
 
         self.name = 'minimax'
-        self.data_name = data_name
         self.epoch = 0
         self.schedule_epoch = schedule_epoch
         self.warm_epoch = warm_epoch
@@ -235,7 +234,7 @@ class MinimaxTrainer(BaseTrainer):
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
         
-        cl = Minimax(data_name, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
+        cl = Minimax(schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum)
 
