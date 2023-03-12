@@ -38,8 +38,7 @@ def convert_dataset(data_name, dataset, tokenizer, max_length=128):
         'mnli': ['premise', 'hypothesis'],
         'qnli': ['question', 'sentence'],
         'rte':  ['sentence1', 'sentence2'],
-        'wnli': ['sentence1', 'sentence2'],
-        'ax':   ['premise', 'hypothesis']
+        'wnli': ['sentence1', 'sentence2']
     }
     text_fields = task_text_field_map[data_name]
 

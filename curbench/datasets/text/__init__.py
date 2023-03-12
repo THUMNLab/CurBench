@@ -14,8 +14,7 @@ data_dict = {
     'mnli': 'accuracy', 
     'qnli': 'accuracy', 
     'rte':  'accuracy', 
-    'wnli': 'accuracy', 
-    'ax':   'accuracy',
+    'wnli': 'accuracy'
 }
 
 task_text_label_range_map = {
@@ -27,8 +26,7 @@ task_text_label_range_map = {
     'mnli': [0, 2],
     'qnli': [0, 1],
     'rte':  [0, 1],
-    'wnli': [0, 1],
-    'ax':   [0, 1],
+    'wnli': [0, 1]
 }
 
 def get_dataset(data_name):

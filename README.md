@@ -44,12 +44,12 @@ ImageNet32: CurBench/data/imagenet32/train_data_batch_1, ...
 
 ### Text
 
-**GLUE** will be downloaded automatically and it consists of **cola**, **sst2**, **mrpc**, **qqp**, **stsb**, **mnli**, **qnli**, **rte**, **wnli**, **ax**.
+**GLUE** will be downloaded automatically and it consists of **cola**, **sst2**, **mrpc**, **qqp**, **stsb**, **mnli**, **qnli**, **rte**, **wnli**.
 
 ### Graph
 **Planetoid** will be downloaded automatically and it consists of **Cora**, **CiteSeer**, **PubMed**.
 
-**TUDataset** will be downloaded automatically and it consists of many datasets, among which we choose **NCI1**, **PROTEINS**, **COLLAB**, **DD**, **PTC_MR**, **IMDB-BINARY**.
+**TUDataset** will be downloaded automatically and it consists of many datasets, among which we choose **NCI1**, **PROTEINS**, **DD**, **PTC_MR**.
 
 
 ## Quick Start

@@ -120,14 +120,14 @@ class BaseTrainer():
             'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier,
 
             'cola': TextClassifier, 'sst2': TextClassifier, 'mrpc': TextClassifier, 'qqp': TextClassifier, 'stsb': TextClassifier, 
-            'mnli': TextClassifier, 'qnli': TextClassifier, 'rte': TextClassifier, 'wnli': TextClassifier, 'ax': TextClassifier,
+            'mnli': TextClassifier, 'qnli': TextClassifier, 'rte': TextClassifier, 'wnli': TextClassifier,
 
             # TODO: Since the data format of node classification is a graph, which can not be loaded as a dataloader,
             # TODO: we may implement curriculum learning for it in the future.
             # 'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
 
             'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
-            'collab': GraphClassifier, 'dd': GraphClassifier, 'ptc_mr': GraphClassifier, 'imdb_binary': GraphClassifier,
+            'dd': GraphClassifier, 'ptc_mr': GraphClassifier,
         }
         assert data_name in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
