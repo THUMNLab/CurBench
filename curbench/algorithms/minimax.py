@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 
@@ -104,7 +105,7 @@ class Minimax(BaseCL):
     def _pretrain(self, dataloader):
         self.net.train()
         for step, data in enumerate(dataloader):
-            if self.data_name in ['cifar10', 'cifar100', 'imagenet32']: 
+            if isinstance(data, list):  
                 # image classification
                 inputs = data[0].to(self.device)
                 labels = data[1].to(self.device)
@@ -112,7 +113,7 @@ class Minimax(BaseCL):
                 outputs = self.net(inputs)
                 loss = self.criterion(outputs, labels).mean()
                 loss.backward()
-            elif self.data_name in ['cola', 'sst2', 'mrpc', 'qqp', 'stsb', 'mnli', 'qnli', 'rte', 'wnli', 'ax']:
+            elif isinstance(data, dict): 
                 # text classification
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                             if k not in ['labels', 'indices']}
@@ -123,7 +124,7 @@ class Minimax(BaseCL):
                 loss = self.criterion(outputs, labels).mean()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 5.0)
-            elif self.data_name in ['mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb_binary']:
+            elif isinstance(data, pygBatch):
                 inputs = data.to(self.device)
                 labels = data.y.to(self.device)
                 indices = data.i.to(self.device)
@@ -143,20 +144,22 @@ class Minimax(BaseCL):
         _net.fc = nn.Identity()
         _net.eval()
         for step, data in enumerate(dataloader):
-            if self.data_name in ['cifar10', 'cifar100', 'imagenet32']:
+            if isinstance(data, list):
                 inputs = data[0].to(self.device)
                 with torch.no_grad():
                     feature = _net(inputs)
-            elif self.data_name in ['cola', 'sst2', 'mrpc', 'qqp', 'stsb', 'mnli', 'qnli', 'rte', 'wnli', 'ax']:
+            elif isinstance(data, dict):
                 # text classification
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                             if k not in ['labels', 'indices']}
                 with torch.no_grad():
                     feature = self.net(**inputs)[0]
-            elif self.data_name in ['mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb_binary']:
+            elif isinstance(data, pygBatch):
                 inputs = data.to(self.device)
                 with torch.no_grad():
                     feature = self.net(inputs)
+            else:
+                raise NotImplementedError()
             all_feature = np.append(all_feature, feature.cpu())
         all_feature = all_feature.reshape(int(self.data_size), int(len(all_feature) / self.data_size))
         return all_feature
