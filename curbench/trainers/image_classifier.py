@@ -30,7 +30,7 @@ class ImageClassifier():
         # data_name == 'cifar10-imbalance-dominant-[0]-4-5-0.8'
         # data_name == 'cifar10-imbalance-exp-[0]-4-5-0.8'
         # self.dataset = get_dataset_with_imbalanced_class(data_name)
-        
+
         train_dataset, valid_dataset, test_dataset = self.dataset
         self.train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=50, shuffle=True, pin_memory=True)
