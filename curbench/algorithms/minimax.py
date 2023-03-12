@@ -15,13 +15,13 @@ class Minimax(BaseCL):
     
     Minimax curriculum learning: Machine teaching with desirable difficulties and scheduled diversity. https://openreview.net/pdf?id=BywyFQlAW
     """
-    def __init__(self, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
+    def __init__(self, data_name, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
         super(Minimax, self).__init__()
 
         self.name = 'minimax'
-
+        self.data_name = data_name
         self.epoch = 0
         self.schedule_epoch = schedule_epoch
         self.warm_epoch = warm_epoch
@@ -84,7 +84,7 @@ class Minimax(BaseCL):
         else:
             pro = self.loss + self.lam * self.centrality
             pro = pro / np.sum(pro)
-            self.train_set = np.random.choice(self.data_size, int(self.siz), p=pro, replace=False)
+            self.train_set = np.random.choice(self.data_size, int(self.siz), p=pro, replace=False).tolist()
             dataset = Subset(self.dataset, self.train_set)
             dataloader = self._dataloader(dataset, shuffle=False)
 
@@ -104,12 +104,35 @@ class Minimax(BaseCL):
     def _pretrain(self, dataloader):
         self.net.train()
         for step, data in enumerate(dataloader):
-            inputs = data[0].to(self.device)
-            labels = data[1].to(self.device)
-            self.optimizer.zero_grad()
-            outputs = self.net(inputs)
-            loss = self.criterion(outputs, labels).mean()
-            loss.backward()
+            if self.data_name in ['cifar10', 'cifar100', 'imagenet32']: 
+                # image classification
+                inputs = data[0].to(self.device)
+                labels = data[1].to(self.device)
+                self.optimizer.zero_grad()
+                outputs = self.net(inputs)
+                loss = self.criterion(outputs, labels).mean()
+                loss.backward()
+            elif self.data_name in ['cola', 'sst2', 'mrpc', 'qqp', 'stsb', 'mnli', 'qnli', 'rte', 'wnli', 'ax']:
+                # text classification
+                inputs = {k: v.to(self.device) for k, v in data.items() 
+                            if k not in ['labels', 'indices']}
+                labels = data['labels'].to(self.device)
+                indices = data['indices'].to(self.device)
+                self.optimizer.zero_grad()
+                outputs = self.net(**inputs)[0] # logits, (hidden_states), (attentions)
+                loss = self.criterion(outputs, labels).mean()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.net.parameters(), 5.0)
+            elif self.data_name in ['mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb_binary']:
+                inputs = data.to(self.device)
+                labels = data.y.to(self.device)
+                indices = data.i.to(self.device)
+                self.optimizer.zero_grad()
+                outputs = self.net(inputs)
+                loss = self.criterion(outputs, labels).mean()   # curriculum part
+                loss.backward()
+            else:
+                raise NotImplementedError()
             self.optimizer.step()
         self.lr_scheduler.step()
     
@@ -120,9 +143,20 @@ class Minimax(BaseCL):
         _net.fc = nn.Identity()
         _net.eval()
         for step, data in enumerate(dataloader):
-            inputs = data[0].to(self.device)
-            with torch.no_grad():
-                feature = _net(inputs)
+            if self.data_name in ['cifar10', 'cifar100', 'imagenet32']:
+                inputs = data[0].to(self.device)
+                with torch.no_grad():
+                    feature = _net(inputs)
+            elif self.data_name in ['cola', 'sst2', 'mrpc', 'qqp', 'stsb', 'mnli', 'qnli', 'rte', 'wnli', 'ax']:
+                # text classification
+                inputs = {k: v.to(self.device) for k, v in data.items() 
+                            if k not in ['labels', 'indices']}
+                with torch.no_grad():
+                    feature = self.net(**inputs)[0]
+            elif self.data_name in ['mutag', 'nci1', 'proteins', 'collab', 'dd', 'ptc_mr', 'imdb_binary']:
+                inputs = data.to(self.device)
+                with torch.no_grad():
+                    feature = self.net(inputs)
             all_feature = np.append(all_feature, feature.cpu())
         all_feature = all_feature.reshape(int(self.data_size), int(len(all_feature) / self.data_size))
         return all_feature
@@ -198,7 +232,7 @@ class MinimaxTrainer(BaseTrainer):
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
         
-        cl = Minimax(schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
+        cl = Minimax(data_name, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum)
 
