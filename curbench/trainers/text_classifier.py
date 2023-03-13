@@ -55,13 +55,14 @@ class TextClassifier():
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.optimizer = torch.optim.SGD(
-            self.net.parameters(), lr=1.0)                              # for lstm
-        self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, T_max=self.epochs, eta_min=1e-5)
-        # self.optimizer = torch.optim.AdamW(
-        #   self.net.parameters(), lr=2e-5)                             # for pretrained bert, gpt
-        # self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        if net_name in ['bert', 'gpt']:                                 # for pretrained bert, gpt
+            self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=2e-5)
+            self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        else:                                                           # for lstm
+            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=1.0)                          
+            self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer, T_max=self.epochs, eta_min=1e-5)
+
         if self.net.num_labels == 1: # data_name == 'stsb'
             self.criterion = torch.nn.MSELoss(reduction='none')
         else:

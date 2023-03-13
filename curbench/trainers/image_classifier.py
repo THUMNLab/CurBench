@@ -49,13 +49,15 @@ class ImageClassifier():
 
         self.epochs = num_epochs
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-        # self.optimizer = torch.optim.SGD(                             # for lenet, resnet
-        #     self.net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-        # self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR( 
-        #     self.optimizer, T_max=self.epochs, eta_min=1e-6)
-        self.optimizer = torch.optim.AdamW(                             # for vit
-            self.net.parameters(), lr=0.001, weight_decay=0.1)
-        self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        if net_name in ['lenet', 'vit']:                                # for vit, lenet
+            self.optimizer = torch.optim.AdamW(
+                self.net.parameters(), lr=0.001, weight_decay=0.1)
+            self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        else:                                                           # for resnet
+            self.optimizer = torch.optim.SGD(
+                self.net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+            self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR( 
+                self.optimizer, T_max=self.epochs, eta_min=1e-6)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
