@@ -17,15 +17,17 @@ parser.add_argument('--alpha', type=float, default=0.7)
 parser.add_argument('--gamma', type=float, default=0.1)
 parser.add_argument('--gamma_decay', type=float, default=None)
 parser.add_argument('--bottom_gamma', type=float, default=0.1)
+parser.add_argument('--teacher_net', type=str, default='lenet')
+parser.add_argument('--teacher_epochs', type=int, default=200)
 parser.add_argument('--teacher_dir', type=str, default=None)
 args = parser.parse_args()
 
 
 pretrainer = BaseTrainer(
     data_name=args.data,
-    net_name=args.net,
+    net_name=args.teacher_net,
     gpu_index=args.gpu,
-    num_epochs=args.epochs,
+    num_epochs=args.teacher_epochs,
     random_seed=args.seed,
 )
 if args.teacher_dir is None:
@@ -37,6 +39,7 @@ teacher_net = pretrainer.export(args.teacher_dir)
 trainer = AdaptiveTrainer(
     data_name=args.data,
     net_name=args.net,
+    gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
     pace_p=args.pace_p,
