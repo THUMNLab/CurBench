@@ -52,14 +52,14 @@ class DIHCL(BaseCL):
             ) # prefix sum
 
         if self.epoch <= self.warm_epoch:
-            self.train_set = np.arange(self.data_size)
+            self.train_set = np.arange(self.data_size).tolist()
         else:
             self._probability_regularize()
             self.rate = max(self.rate * self.decay_rate, self.bottom_size)
             select = int(np.floor(self.rate * self.data_size))
             self.train_set = np.random.choice(
                 self.data_size, select, p=self.probability, replace=False
-            )
+            ).tolist()
 
         dataset = Subset(self.dataset, self.train_set)
         return self._dataloader(dataset, shuffle=False)
