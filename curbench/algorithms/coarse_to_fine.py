@@ -88,6 +88,8 @@ class CoarseToFine(BaseCL):
                     inputs = data.to(self.device)
                     labels = data.y.to(self.device)
                     outputs = self.pretrained_model(inputs)
+                else:
+                    raise NotImplementedError()
                 _, predicted = torch.max(outputs, dim=1)
                 for index in range(len(predicted)):
                     self.confusion_matrix[int(labels[index])][int(predicted[index])] += 1
