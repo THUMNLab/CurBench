@@ -129,10 +129,11 @@ class BaseTrainer():
             'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
             'dd': GraphClassifier, 'ptc_mr': GraphClassifier,
         }
-        assert data_name in trainer_dict, \
+        # allow data name format: [data]-[noise/imbalance]-[args]
+        assert data_name.split('-')[0] in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
-        
-        self.trainer = trainer_dict[data_name](
+
+        self.trainer = trainer_dict[data_name.split('-')[0]](
             data_name, net_name, gpu_index, num_epochs, random_seed,
             cl.name, cl.data_prepare, cl.model_prepare,
             cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum,

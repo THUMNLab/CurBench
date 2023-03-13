@@ -8,13 +8,10 @@ import numpy as np
 from torch.utils.data import Subset
 from torchvision import datasets, transforms
 
-from .utils import Cutout, LabelNoise, ClassImbalanced
+from .utils import Cutout
 
 
-def get_cifar100_dataset(data_dir='data', valid_ratio=0.1,
-                         augment=True, cutout_length=0, noise_ratio=0.0,
-                         imbalance_mode="none", imbalance_dominant_labels=None, imbalance_dominant_ratio=4,
-                         imbalance_dominant_minor_floor=5, imbalance_exp_mu=0.9):
+def get_cifar100_dataset(data_dir='data', valid_ratio=0.1, augment=True, cutout_length=0):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
 
@@ -56,12 +53,6 @@ def get_cifar100_dataset(data_dir='data', valid_ratio=0.1,
     train_idx, valid_idx = indices[split:], indices[:split]
     train_dataset = Subset(train_dataset, train_idx)
     valid_dataset = Subset(valid_dataset, valid_idx)
-
-    if noise_ratio > 0.0:
-        train_dataset = LabelNoise(train_dataset, noise_ratio, 100)
-    if imbalance_mode != "none":
-        train_dataset = ClassImbalanced(train_dataset, imbalance_mode, \
-            imbalance_dominant_labels, imbalance_dominant_ratio, imbalance_dominant_minor_floor,\
-                imbalance_exp_mu)
+    test_dataset.__setattr__('num_classes', 100)
     
     return train_dataset, valid_dataset, test_dataset

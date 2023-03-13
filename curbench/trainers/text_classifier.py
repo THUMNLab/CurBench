@@ -2,9 +2,8 @@ import os
 import time
 import torch
 
-from ..datasets.text import get_dataset, get_tokenizer, get_metric, convert_dataset, \
-    get_dataset_with_noise, get_dataset_with_imbalanced_class
-from ..backbones.text import get_net
+from ..datasets.text import get_dataset, get_metric
+from ..backbones.text import get_net, get_tokenizer
 from ..utils import set_random, create_log_dir, get_logger
 
 
@@ -21,24 +20,17 @@ class TextClassifier():
 
         set_random(self.random_seed)
         self._init_dataloader(data_name, net_name)
-        self._init_model(data_name, net_name, gpu_index, num_epochs)
+        self._init_model(net_name, gpu_index, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
     def _init_dataloader(self, data_name, net_name):
-        self.dataset = get_dataset(data_name) # dict: {train, valid, test}
-        
-        self.metric, self.metric_name = get_metric(data_name)
+        # standard:  'sst2'
+        # noise:     'sst2-noise-0.4', 
+        # imbalance: 'sst2-imbalance-dominant-[0,1]-4-5-0.8', 'sst2-imbalance-exp-[0,1]-4-5-0.8'
         self.tokenizer = get_tokenizer(net_name)
-
-        dataset = convert_dataset(data_name, self.dataset, self.tokenizer)
-        
-        # config = data_name + '-noise-0.4'
-        # dataset = get_dataset_with_noise(config, dataset)
-        
-        # config = data_name + '-imbalance-dominant-[0]-4-5-0.8'
-        # config = data_name + '-imbalance-exp-[0]-4-5-0.8'
-        # dataset = get_dataset_with_imbalanced_class(config, dataset)
+        self.dataset, dataset = get_dataset(data_name, self.tokenizer)  # data format is dict: {train, valid, test}
+        self.metric, self.metric_name = get_metric(data_name)
     
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, shuffle=True, pin_memory=True)
@@ -56,7 +48,7 @@ class TextClassifier():
         self.data_prepare(self.train_loader)                            # curriculum part
 
 
-    def _init_model(self, data_name, net_name, gpu_index, num_epochs):
+    def _init_model(self, net_name, gpu_index, num_epochs):
         self.net = get_net(net_name, self.dataset, self.tokenizer)
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')

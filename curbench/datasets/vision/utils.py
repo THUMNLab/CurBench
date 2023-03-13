@@ -1,6 +1,6 @@
+import collections
 import numpy as np
 import torch
-import collections
 from torch.utils.data import Dataset
 
 

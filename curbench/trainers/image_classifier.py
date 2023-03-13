@@ -2,7 +2,7 @@ import os
 import time
 import torch
 
-from ..datasets.vision import get_dataset_with_noise, get_dataset_with_imbalanced_class
+from ..datasets.vision import get_dataset
 from ..backbones.vision import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
@@ -20,17 +20,16 @@ class ImageClassifier():
 
         set_random(self.random_seed)
         self._init_dataloader(data_name)
-        self._init_model(data_name, net_name, gpu_index, num_epochs)
+        self._init_model(net_name, gpu_index, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
     def _init_dataloader(self, data_name):
-        self.dataset = get_dataset_with_noise(data_name) # list: [train, valid, test]
+        # standard:  'cifar10'
+        # noise:     'cifar10-noise-0.4', 
+        # imbalance: 'cifar10-imbalance-dominant-[0,1]-4-5-0.8', 'cifar10-imbalance-exp-[0,1]-4-5-0.8'
+        self.dataset = get_dataset(data_name) # data format is list: [train, valid, test]
         
-        # data_name == 'cifar10-imbalance-dominant-[0]-4-5-0.8'
-        # data_name == 'cifar10-imbalance-exp-[0]-4-5-0.8'
-        # self.dataset = get_dataset_with_imbalanced_class(data_name)
-
         train_dataset, valid_dataset, test_dataset = self.dataset
         self.train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=50, shuffle=True, pin_memory=True)
@@ -42,8 +41,8 @@ class ImageClassifier():
         self.data_prepare(self.train_loader)                            # curriculum part
 
 
-    def _init_model(self, data_name, net_name, gpu_index, num_epochs):
-        self.net = get_net(net_name, data_name)
+    def _init_model(self, net_name, gpu_index, num_epochs):
+        self.net = get_net(net_name, self.dataset)
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')
         self.net.to(self.device)

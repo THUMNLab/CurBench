@@ -1,7 +1,6 @@
 import evaluate
-from transformers import AutoTokenizer
 
-from .glue import get_glue_dataset, convert_dataset
+from .glue import get_glue_dataset
 from .utils import LabelNoise, ClassImbalanced
 
 
@@ -29,13 +28,11 @@ task_text_label_range_map = {
     'wnli': [0, 1]
 }
 
-def get_dataset(data_name):
-    assert data_name in data_dict, \
-            'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    return get_glue_dataset(data_name)
-
-
-def get_dataset_with_noise(data_name, dataset):
+def get_dataset(data_name, tokenizer):
+    assert not ('noise' in data_name and 'imbalance' in data_name), \
+        'Assert Error: only support one setting from [standard, noise, imbalance]'
+    
+    # noise setting
     if 'noise' in data_name:
         try:
             parts = data_name.split('-')
@@ -46,16 +43,9 @@ def get_dataset_with_noise(data_name, dataset):
         assert noise_ratio >= 0.0 and noise_ratio <= 1.0, \
             'Assert Error: noise ratio should be in range of [0.0, 1.0]'
     else:
-        noise_ratio = 0.0
+        noise_ratio = None
 
-    if noise_ratio > 0.0:
-        label_range = task_text_label_range_map[data_name]
-        label_int = False if data_name == 'stsb' else True
-        dataset = LabelNoise(dataset, noise_ratio, label_range, label_int)
-    return dataset
-
-
-def get_dataset_with_imbalanced_class(data_name, dataset):
+    # imbalance setting
     if 'imbalance' in data_name:
         try:
             parts = data_name.split('-')
@@ -66,37 +56,26 @@ def get_dataset_with_imbalanced_class(data_name, dataset):
             imbalance_dominant_minor_floor = int(parts[5])
             imbalance_exp_mu = float(parts[6])
         except:
-            assert False, 'Assert Error: data_name shoule be [dataset]-imbalance-[mode]-[dominant_labels]-[dominant_ratio]-[dominant_minor_floor]-[exp_mu]'
+            assert False, 'Assert Error: data_name shoule be \
+                [dataset]-imbalance-[mode]-[dominant_labels]-[dominant_ratio]-[dominant_minor_floor]-[exp_mu]'
     else:
-        imbalance_mode = 'none'
-        imbalance_dominant_labels = None
-        imbalance_dominant_ratio = 1
-        imbalance_dominant_minor_floor = 0
-        imbalance_exp_mu = 1
+        imbalance_mode = None
 
-    if imbalance_mode != 'none':
-        dataset = ClassImbalanced(dataset, imbalance_mode, imbalance_dominant_labels,\
-            imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
-    return dataset
+    # get standard, noisy or imbalanced dataset
+    assert data_name in data_dict, 'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
+    raw_dataset, converted_dataset = get_glue_dataset(data_name, tokenizer)
+    if noise_ratio:
+        label_range = task_text_label_range_map[data_name]
+        converted_dataset = LabelNoise(converted_dataset, noise_ratio, label_range, label_int=(data_name != 'stsb'))
+    if imbalance_mode:
+        converted_dataset = ClassImbalanced(converted_dataset, imbalance_mode, imbalance_dominant_labels,
+                                            imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
+    return raw_dataset, converted_dataset
 
 
 def get_metric(data_name):
+    # allow data name format: [data]-[noise/imbalance]-[args]
+    data_name = data_name.split('-')[0]
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
     return evaluate.load('glue', data_name), data_dict[data_name]
-
-
-def get_tokenizer(net_name):
-    tokenizer_dict = {
-        'gpt': 'gpt2',
-        'bert': 'bert-base-uncased',
-        'lstm': 'bert-base-uncased',
-    }
-    assert net_name in tokenizer_dict, \
-        'Assert Error: net_name should be in ' + str(list(tokenizer_dict.keys()))
-
-    tokenizer_name = tokenizer_dict[net_name]
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
-    if 'gpt' in tokenizer_name:     # for gpt
-        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    return tokenizer

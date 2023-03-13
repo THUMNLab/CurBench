@@ -1,10 +1,7 @@
 import datasets
 
-def get_glue_dataset(data_name):
-    return datasets.load_dataset('glue', data_name)
 
-
-def convert_dataset(data_name, dataset, tokenizer, max_length=128):
+def convert_dataset(data_name, tokenizer, dataset, max_length=128):
 
     def convert_with_tokenizer(batch):
         # Either encode single sentence or sentence pairs
@@ -27,7 +24,6 @@ def convert_dataset(data_name, dataset, tokenizer, max_length=128):
     def convert_with_vocab(batch):
         # TODO: with torchtext.vocab
         return batch
-
 
     task_text_field_map = {
         'cola': ['sentence'],
@@ -52,12 +48,17 @@ def convert_dataset(data_name, dataset, tokenizer, max_length=128):
         'labels'
     ]
 
-    updated_dataset = {}
+    converted_dataset = {}
     for key in dataset.keys():
-        updated_dataset[key] = dataset[key].map(
+        converted_dataset[key] = dataset[key].map(
             convert_with_tokenizer, batched=True, remove_columns=['label'],
         )
-        columns = [c for c in updated_dataset[key].column_names if c in loader_columns]
-        updated_dataset[key].set_format(type="torch", columns=columns)
+        columns = [c for c in converted_dataset[key].column_names if c in loader_columns]
+        converted_dataset[key].set_format(type="torch", columns=columns)
+    return converted_dataset
 
-    return updated_dataset
+
+def get_glue_dataset(data_name, tokenizer):
+    raw_dataset = datasets.load_dataset('glue', data_name)
+    converted_dataset = convert_dataset(data_name, tokenizer, raw_dataset)
+    return raw_dataset, converted_dataset

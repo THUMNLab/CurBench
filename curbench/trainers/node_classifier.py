@@ -20,7 +20,7 @@ class NodeClassifier():
 
         set_random(self.random_seed)
         self._init_dataloader(data_name)
-        self._init_model(data_name, net_name, gpu_index, num_epochs)
+        self._init_model(net_name, gpu_index, num_epochs)
         self._init_logger(algorithm_name, data_name, net_name, num_epochs, random_seed)
 
 
@@ -30,7 +30,7 @@ class NodeClassifier():
         # TODO: for data_prepare
 
 
-    def _init_model(self, data_name, net_name, gpu_index, num_epochs):
+    def _init_model(self, net_name, gpu_index, num_epochs):
         self.net = get_net(net_name, self.dataset)
         self.device = torch.device('cuda:%d' % (gpu_index) \
             if torch.cuda.is_available() else 'cpu')

@@ -2,7 +2,7 @@ import numpy as np
 from torch_geometric.datasets import TUDataset
 
 
-def get_tudataset_dataset(data_dir, data_name):
+def get_tudataset_dataset(data_name, data_dir='data/tudataset'):
     return TUDataset(root=data_dir, name=data_name)
 
 
