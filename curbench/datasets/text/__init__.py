@@ -1,7 +1,7 @@
 import evaluate
 
 from .glue import get_glue_dataset
-from .utils import LabelNoise, ClassImbalanced
+from .utils import LabelNoise, ClassImbalanced, SplitedDataset
 
 
 data_dict = {
@@ -64,6 +64,7 @@ def get_dataset(data_name, tokenizer):
     # get standard, noisy or imbalanced dataset
     assert data_name in data_dict, 'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
     raw_dataset, converted_dataset = get_glue_dataset(data_name, tokenizer)
+    converted_dataset = SplitedDataset(converted_dataset)
     if noise_ratio:
         label_range = task_text_label_range_map[data_name]
         converted_dataset = LabelNoise(converted_dataset, noise_ratio, label_range, label_int=(data_name != 'stsb'))
