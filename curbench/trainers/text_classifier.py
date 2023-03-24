@@ -63,8 +63,10 @@ class TextClassifier():
         self.net.to(self.device)
 
         self.epochs = num_epochs
-        self.optimizer = torch.optim.SGD(
-            self.net.parameters(), lr=1.0)                              # for lstm
+        # self.optimizer = torch.optim.SGD(
+        #     self.net.parameters(), lr=1)                              # for lstm
+        self.optimizer = torch.optim.Adamax(filter(lambda p: p.requires_grad, self.net.parameters()))
+        # self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.005, weight_decay=5e-4)
         self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             self.optimizer, T_max=self.epochs, eta_min=1e-5)
         # self.optimizer = torch.optim.AdamW(
