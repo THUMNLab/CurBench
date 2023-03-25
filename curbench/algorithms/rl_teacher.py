@@ -1,6 +1,7 @@
 from collections import deque
 import numpy as np
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 
@@ -42,6 +43,16 @@ class ThompsonPolicy(EpsilonGreedyPolicy):
     pass
 
 
+class BoltsmannPolicy:
+    def __init__(self, temperature=1.) -> None:
+        self.temperature = temperature
+
+    def __call__(self, Q):
+        e = np.exp((Q-np.max(Q))/self.temperature)
+        p = e/np.sum(e)
+        assert np.isclose(np.sum(p), 1)
+        return p
+
 
 class RLTeacherOnline(BaseCL):
     """Reinforcement Learning Teacher CL Algorithm. 
@@ -56,10 +67,10 @@ class RLTeacherOnline(BaseCL):
 
         self.catnum = 10
         self.alpha = 0.1
-        self.total = [0 for i in range(self.catnum)]
+        self.total = [0 for _ in range(self.catnum)]
         self.abs = False
 
-        self.accs = [0 for i in range(self.catnum)]
+        self.accs = [0 for _ in range(self.catnum)]
         self.reward = []
 
 
@@ -84,14 +95,42 @@ class RLTeacherOnline(BaseCL):
         self.reward = []
         for i in range(self.catnum):
             acc = 0
-            for (sample, label, indices) in self.validationData[i]:
-                sample = sample.to(self.device)
-                label = label.to(self.device)
-                out = self.net(sample)
-                _, pred = out.max(1)
-                num_correct = (pred == label).sum().item()
-                acc += num_correct/len(self.validationData[i])
+            correct =0
+            predictions, references = [],[]
+            for data in self.validationData[i]:
+                if isinstance(data, list):  # image classifier
+                    sample = data[0].to(self.device)
+                    label = data[1].to(self.device)
+                    out = self.net(sample)
+                    _, pred = out.max(1)
+                    num_correct = (pred == label).sum().item()  
+                    acc += num_correct/len(self.validationData[i])
+                elif isinstance(data, dict):  # text classifier
+                    raise NotImplementedError()
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.net(**inputs)[0]
+                    references += labels.tolist()
+                    if net.num_labels ==1:
+                        predictions += outputs.squeeze()
+                    else:
+                        predictions += outputs.argmax(dim=1).tolist()
+                    correct = (predictions == references).sum().item()
+                    acc += num_correct/len(self.validationData[i])
+                elif isinstance(data,pygBatch):  # graph classifier
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc_ = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc += correct/len(self.validationData[i])
+                else:
+                    raise NotImplementedError()
+            
             accs.append(acc)
+
         for i, j in zip(accs, self.accs):
             self.reward.append(i-j)
         self.accs = accs

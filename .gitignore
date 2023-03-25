@@ -10,4 +10,6 @@ __pycache__
 old*
 run.sh
 test.py
-record.txt
+
+.neptune
+wrapper.py
