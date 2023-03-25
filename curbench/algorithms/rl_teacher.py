@@ -116,15 +116,16 @@ class RLTeacherOnline(BaseCL):
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
+                    # todo: how to get the accuracies
                     correct = (predictions == references).sum().item()
-                    acc += num_correct/len(self.validationData[i])
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc = valid_metric
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
                     labels = data.y.to(self.device)
                     outputs = self.net(inputs)
                     predicts = outputs.argmax(dim=1)
                     correct += predicts.eq(labels).sum().item()
-                    acc_ = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
                     acc += correct/len(self.validationData[i])
                 else:
                     raise NotImplementedError()
