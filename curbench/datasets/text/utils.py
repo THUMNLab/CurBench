@@ -2,9 +2,40 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import collections
+import datasets
 from datasets import Dataset
 from datasets.arrow_dataset import Dataset as SubDataset
 
+
+class SlicingDataset(SubDataset):
+    def __init__(self, dataset, idx):
+        self.idx = idx
+        self.dataset = dataset
+        
+    def __getitem__(self, index):
+        return self.dataset[self.idx[index].tolist()]
+        
+    def __len__(self):
+        return len(self.idx)
+
+class SplitedDataset(Dataset):
+    def __init__(self, dataset, ratio=0.95):
+        self.dataset = dataset
+        self.ratio = ratio
+        self.train_len = len(self.dataset['train'])
+        self.train_idx = np.array(range(self.train_len))
+        self.test_idx = np.random.choice(a=self.train_idx, size=int(self.train_len * (1 - ratio)), replace=False)
+        self.train_idx = np.delete(self.train_idx, self.test_idx)
+        self.train_dataset = SlicingDataset(self.dataset['train'], self.train_idx)
+        self.test_dataset = SlicingDataset(self.dataset['train'], self.test_idx)
+        
+    def __getitem__(self, key):
+        if key == 'train':
+            return self.train_dataset
+        elif key == 'test':
+            return self.test_dataset
+        else:
+            return self.dataset[key]
 
 class UtilDataset(SubDataset):
     def __init__(self, dataset, idx, labels, use_labels=True):

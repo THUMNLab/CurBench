@@ -60,7 +60,7 @@ class BaseCL():
             raise NotImplementedError()
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         """Pass training data information from Model Trainer to CL Algorithm.
         
         Initiate the CLDataset and record training data attributes.
@@ -72,8 +72,7 @@ class BaseCL():
         self.n_batches = (self.data_size - 1) // self.batch_size + 1
 
 
-    def model_prepare(self, net, device, epochs, 
-                      criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         """Pass model information from Model Trainer to CL Algorithm."""
         self.net = net
         self.device = device
@@ -83,17 +82,17 @@ class BaseCL():
         self.lr_scheduler = lr_scheduler
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         """Measure data difficulty and schedule the training set."""
         return self._dataloader(self.dataset)
 
 
-    def model_curriculum(self):
+    def model_curriculum(self, **kwargs):
         """Schedule the model changing."""
         return self.net
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         """Reweight loss."""
         return torch.mean(self.criterion(outputs, labels))
 

@@ -21,7 +21,7 @@ class DataParameters(BaseCL):
         self.wd_data_param = wd_data_param
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.class_size = self.net.num_labels
         
@@ -44,7 +44,7 @@ class DataParameters(BaseCL):
         self.class_optimizer.zero_grad()
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         # update last batch
         self.data_optimizer.step()
         self.class_optimizer.step()

@@ -36,19 +36,19 @@ class MetaWeightNet(BaseCL):
         self.weights = torch.zeros(self.data_size)
        
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.randomSplit()
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.vnet = VNet(1, 100, 1).to(self.device)
         self.net = net.to(device)
         self.weights = self.weights.to(self.device)
 
 
-    def data_curriculum(self):    
+    def data_curriculum(self, **kwargs):    
         self.net.train()
         try:
             temp = next(self.iter)
@@ -111,7 +111,7 @@ class MetaWeightNet(BaseCL):
         return [[image, labels, indices]]
     
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 

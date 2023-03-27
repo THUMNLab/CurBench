@@ -2,6 +2,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 
@@ -23,12 +24,12 @@ class CoarseToFine(BaseCL):
         self.pretrained_model = pretrained_net
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dataloader = loader
     
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
 
         self.num_classes = self.net.num_labels
@@ -39,7 +40,7 @@ class CoarseToFine(BaseCL):
             raise ValueError("The number of clusters should not exceed the number of classes.")
 
         try:
-            self.classifier = self.net.layer1
+            self.classifier = self.net.fc
         except:
             raise ValueError("net should have a linear classifier")
     
@@ -74,9 +75,21 @@ class CoarseToFine(BaseCL):
         
         with torch.no_grad():
             for step, data in enumerate(self.dataloader):
-                inputs = data[0].to(self.device)
-                labels = data[1].to(self.device)
-                outputs = self.pretrained_model(inputs)
+                if isinstance(data, list):
+                    inputs = data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                elif isinstance(data, dict):
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.pretrained_model(**inputs)[0]
+                elif isinstance(data, pygBatch):
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                else:
+                    raise NotImplementedError()
                 _, predicted = torch.max(outputs, dim=1)
                 for index in range(len(predicted)):
                     self.confusion_matrix[int(labels[index])][int(predicted[index])] += 1
@@ -143,8 +156,8 @@ class CoarseToFine(BaseCL):
 
         self._scheduler()
 
-        print("classify = ", classify)
-        print("curriculum schedule = ", self.schedule)
+        # print("classify = ", classify)
+        # print("curriculum schedule = ", self.schedule)
 
     def _scheduler(self):
         self.schedule = np.array([0])
@@ -156,7 +169,7 @@ class CoarseToFine(BaseCL):
 class CoarseToFineTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  cluster_K, pretrained_net):
-        
+
         cl = CoarseToFine(cluster_K, pretrained_net)
 
         super(CoarseToFineTrainer, self).__init__(

@@ -34,7 +34,7 @@ class DIHCL(BaseCL):
             self.cei = cei
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dih_loss = np.zeros(self.data_size)
         self.train_set = np.arange(self.data_size)
@@ -43,7 +43,7 @@ class DIHCL(BaseCL):
         self.data_index = np.zeros(self.data_size)
     
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.cnt = 0
         self.epoch += 1
         if self.epoch > 1:
@@ -52,14 +52,14 @@ class DIHCL(BaseCL):
             ) # prefix sum
 
         if self.epoch <= self.warm_epoch:
-            self.train_set = np.arange(self.data_size)
+            self.train_set = np.arange(self.data_size).tolist()
         else:
             self._probability_regularize()
             self.rate = max(self.rate * self.decay_rate, self.bottom_size)
             select = int(np.floor(self.rate * self.data_size))
             self.train_set = np.random.choice(
                 self.data_size, select, p=self.probability, replace=False
-            )
+            ).tolist()
 
         dataset = Subset(self.dataset, self.train_set)
         return self._dataloader(dataset, shuffle=False)
@@ -87,7 +87,7 @@ class DIHCL(BaseCL):
         self.probability /= np.sum(self.probability)
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         losses = self.criterion(outputs, labels)
         self.epoch_lr = self.lr_scheduler.get_last_lr()[0]
         if self.type == 'prediction_flip':

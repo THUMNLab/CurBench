@@ -42,7 +42,7 @@ class Minimax(BaseCL):
         self.fe_central_sum = fe_central_sum
     
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dataloader = loader
         
@@ -56,7 +56,7 @@ class Minimax(BaseCL):
         self.train_set = np.arange(self.data_size)
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         if self.delta is None:
             self.delta = int((self.data_size - self.siz) / (int(self.epochs / self.schedule_epoch)))
@@ -66,7 +66,7 @@ class Minimax(BaseCL):
         self.num_classes = self.net.num_labels
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         if self.epoch % self.schedule_epoch == 0:
             if self.epoch != 0:
                 self.lam = max(self.lam * (1 - self.gamma), self.minlam)
@@ -93,7 +93,7 @@ class Minimax(BaseCL):
         return dataloader
     
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         losses = self.criterion(outputs, labels)
         for loss in losses:
             self.loss[self.train_set[self.cnt]] = loss

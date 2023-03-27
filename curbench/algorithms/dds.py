@@ -41,12 +41,12 @@ class DDS(BaseCL):
         self.weights = torch.zeros(self.data_size)
        
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.randomSplit()
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.weights = self.weights.to(self.device)
         self.last_net = copy.deepcopy(self.net)
@@ -55,7 +55,7 @@ class DDS(BaseCL):
         self.image, self.label, self.indices = next(self.iter1)
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.net.train()
         self.vnet_.train()
         self.linear.train()
@@ -150,7 +150,7 @@ class DDS(BaseCL):
         return [[a, b, i]]
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 

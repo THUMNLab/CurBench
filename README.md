@@ -79,7 +79,7 @@ python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet
 python examples/base.py --data <rte/sst2/cola/> --net <lstm/bert/gpt> --gpu <0/1/2/>
 
 # 3. graph standard
-python examples/base.py --data <nci1/ptc_mr/imdb-binary/> --net <gcn/gat/sage> --gpu <0/1/2/>
+python examples/base.py --data <nci1/ptc_mr/> --net <gcn/gat/sage> --gpu <0/1/2/>
 ```
 
 

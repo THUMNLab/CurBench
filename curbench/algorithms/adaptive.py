@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 from .base import BaseTrainer, BaseCL
 
 
@@ -31,12 +32,12 @@ class Adaptive(BaseCL):
         self.pretrained_model = pretrained_net
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dataloader = loader
     
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         if self.epoch == 0:
             self.pretrained_model.to(self.device)
             self.difficulty = torch.Tensor().to(self.device)
@@ -53,7 +54,7 @@ class Adaptive(BaseCL):
         self.epoch_size = self.data_size * min(self.pace_p * (self.pace_q ** int(math.floor(self.epoch / self.pace_r))), 1)
         self.epoch_size = int(self.epoch_size)
         data_sort = torch.argsort(self.difficulty)
-        self.data_indice = data_sort[0 : self.epoch_size]
+        self.data_indice = data_sort[0 : self.epoch_size].detach().cpu().numpy().tolist()
         dataset = Subset(self.dataset, self.data_indice)
         dataloader = self._dataloader(dataset, shuffle=False)
 
@@ -67,12 +68,13 @@ class Adaptive(BaseCL):
         return dataloader
         
     
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         losses = torch.mean(self.criterion(outputs, labels))
         epoch_pretrained_output = torch.Tensor().to(self.device)
         for indice in self.data_indice[self.cnt : (self.cnt + self.batch_size)]:
             epoch_pretrained_output = torch.cat((epoch_pretrained_output, self.pretrained_output[int(indice)]), 0)
-        epoch_pretrained_output = epoch_pretrained_output.view(-1, 10)
+        label_num = len(self.pretrained_output[0])
+        epoch_pretrained_output = epoch_pretrained_output.view(-1, label_num)
         epoch_pretrained_output = F.softmax(epoch_pretrained_output, dim=1)
 
         output = F.softmax(outputs, dim=1)
@@ -85,14 +87,26 @@ class Adaptive(BaseCL):
     def _set_initial_difficulty(self):
     
         self.pretrained_model.eval()
-        for step, data in enumerate(self.dataloader):
-            inputs = data[0].to(self.device)
-            labels = data[1].to(self.device)
-            with torch.no_grad():
-                outputs = self.pretrained_model(inputs)
-            self.pretrained_output = torch.cat((self.pretrained_output, outputs), 0)
-            loss = self.crossEntrophy(outputs, labels)
-            self.difficulty = torch.cat((self.difficulty, loss), 0)
+        with torch.no_grad():
+            for step, data in enumerate(self.dataloader):
+                if isinstance(data, list):
+                    inputs = data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                elif isinstance(data, dict):
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                                if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.pretrained_model(**inputs)[0]
+                elif isinstance(data, pygBatch):
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                else:
+                    raise NotImplementedError()
+                self.pretrained_output = torch.cat((self.pretrained_output, outputs), 0)
+                loss = self.crossEntrophy(outputs, labels)
+                self.difficulty = torch.cat((self.difficulty, loss), 0)
 
 
     def _difficulty_measurer(self):
@@ -101,8 +115,23 @@ class Adaptive(BaseCL):
 
         for step, data in enumerate(self.dataloader):
             with torch.no_grad():
-                outputs = self.model(data[0].to(self.device))
-            loss = self.crossEntrophy(outputs, data[1].to(self.device)).detach()
+                if isinstance(data, list):
+                    inputs = data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                elif isinstance(data, dict):
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.pretrained_model(**inputs)[0]
+                elif isinstance(data, pygBatch):
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.pretrained_model(inputs)
+                else:
+                    raise NotImplementedError()
+                loss = self.crossEntrophy(outputs, labels).detach()
+            
             current_difficulty = torch.cat((current_difficulty, loss), 0)
         
         self.difficulty = (1 - self.alpha) * self.difficulty + self.alpha * current_difficulty
