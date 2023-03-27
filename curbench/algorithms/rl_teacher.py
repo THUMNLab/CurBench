@@ -5,6 +5,7 @@ from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 
+from ..datasets.text import get_metric
 
 
 def estimate_slope(x, y):
@@ -72,6 +73,7 @@ class RLTeacherOnline(BaseCL):
 
         self.accs = [0 for _ in range(self.catnum)]
         self.reward = []
+        # self.metric, self.metric_name = get_metric(dataname) # todo
 
 
     def data_split(self):
@@ -96,7 +98,7 @@ class RLTeacherOnline(BaseCL):
         for i in range(self.catnum):
             acc = 0
             correct =0
-            predictions, references = [],[]  # todo
+            predictions, references = [],[]
             for data in self.validationData[i]:
                 if isinstance(data, list):  # image classifier
                     inputs = data[0].to(self.device)
@@ -106,20 +108,17 @@ class RLTeacherOnline(BaseCL):
                     correct += predicts.eq(labels).sum().item()
                     acc += num_correct/len(self.validationData[i])
                 elif isinstance(data, dict):  # text classifier
-                    # todo
-                    raise NotImplementedError()
+                    # raise NotImplementedError()
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
                     labels = data['labels'].to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
-                    if net.num_labels ==1:
+                    if self.net.num_labels ==1:
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
-                    # todo: how to get the accuracies
-                    correct = (predictions == references).sum().item()
-                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]  # todo
                     acc = valid_metric
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
@@ -205,8 +204,6 @@ class RLTeacherNaive(BaseCL):
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
-                    # todo: how to get the accuracies
-                    correct = (predictions == references).sum().item()
                     valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
                     acc = valid_metric
                 elif isinstance(data,pygBatch):  # graph classifier
@@ -236,7 +233,6 @@ class RLTeacherNaive(BaseCL):
 
         return self.data_loader
 
-# todo
 class RLTeacherWindow(BaseCL):
     def __init__(self, ):
         super(RLTeacherWindow, self).__init__()
@@ -287,7 +283,7 @@ class RLTeacherWindow(BaseCL):
                 correct += predicts.eq(labels).sum().item()
                 acc += correct/len(self.validationData)
             elif isinstance(data, dict):  # text classifier
-                raise NotImplementedError()
+                raise NotImplementedError()  # todo
             elif isinstance(data,pygBatch):  # graph classifier
                 inputs = data.to(self.device)
                 labels = data.y.to(self.device)
@@ -361,7 +357,7 @@ class RLTeacherSampling(BaseCL):
                     correct += predicts.eq(labels).sum().item()
                     acc += correct/len(self.data[i])
                 elif isinstance(data, dict):  # text classifier
-                    raise NotImplementedError()
+                    raise NotImplementedError()  # todo
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
                     labels = data.y.to(self.device)
