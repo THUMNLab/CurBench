@@ -25,7 +25,7 @@ class LocalToGlobal(BaseCL):
         self.strategy = strategy
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.class_size = self.net.num_labels
         self.init_scheduler_state = self.lr_scheduler.state_dict()
@@ -36,7 +36,7 @@ class LocalToGlobal(BaseCL):
             self.class_indices[label].append(index)
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.epoch += 1
 
         class_size = min(self.class_size, self._subclass_grow())
@@ -73,13 +73,13 @@ class LocalToGlobal(BaseCL):
         return self._dataloader(dataset)
 
 
-    def model_curriculum(self):
+    def model_curriculum(self, **kwargs):
         if (self.epoch - 1) % self.grow_interval == 0:
             self.lr_scheduler.load_state_dict(self.init_scheduler_state)
         return self.net
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         return torch.mean(self.criterion(outputs[:, self.classes], self._label_map(labels)))
 
     

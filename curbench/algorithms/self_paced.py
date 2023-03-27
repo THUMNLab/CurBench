@@ -36,13 +36,13 @@ class SelfPaced(BaseCL):
         self.weight_fn = weight_fn
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         if self.teacher_net is None:                # In Self-Paced Learning, the network is itself.
             self.teacher_net = net                  # In Transfer Teacher, the network is teacher net.
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.epoch += 1
 
         data_rate = min(1.0, self._subset_grow())   # Current proportion of sampled data.
@@ -60,7 +60,7 @@ class SelfPaced(BaseCL):
         return self._dataloader(dataset)
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         if self.weight_fn == 'hard':
             return torch.mean(self.criterion(outputs, labels))
         else:

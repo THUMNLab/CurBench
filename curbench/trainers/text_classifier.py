@@ -45,7 +45,7 @@ class TextClassifier():
             self.test_loader = [torch.utils.data.DataLoader(
                 dataset['test'], batch_size=50, pin_memory=True)]
 
-        self.data_prepare(self.train_loader)                            # curriculum part
+        self.data_prepare(self.train_loader, metric=self.metric)        # curriculum part
 
 
     def _init_model(self, net_name, gpu_index, num_epochs):
@@ -120,7 +120,7 @@ class TextClassifier():
             train_metric = self.metric.compute(predictions=predictions, references=references)[self.metric_name]
             self.logger.info(
                 '[%3d]  Train data = %7d  Train %s = %.4f  Loss = %.4f  Time = %.2fs'
-                % (epoch + 1, total, self.metric_name, train_metric, train_loss / total, time.time() - t))
+                % (epoch + 1, total, self.metric_name.capitalize(), train_metric, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
                 valid_metrics = [self._valid(valid_loader) for valid_loader in self.valid_loader]
@@ -130,7 +130,7 @@ class TextClassifier():
                 for valid_loader, valid_metric, best_metric in zip(self.valid_loader, valid_metrics, best_metrics):
                     self.logger.info(
                         '[%3d]  Valid data = %7d  Valid %s = %.4f  Best Valid %s = %.4f' 
-                        % (epoch + 1, len(valid_loader.dataset), self.metric_name, valid_metric, self.metric_name, best_metric))
+                        % (epoch + 1, len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric, self.metric_name.capitalize(), best_metric))
             
 
     def _valid(self, loader):
@@ -162,8 +162,8 @@ class TextClassifier():
             valid_metric = self._valid(valid_loader)
             # test_metric = self._valid(test_loader)
             # self.logger.info('Best Valid %s = %.4f and Final Test %s = %.4f' 
-            #                 % (self.metric_name, valid_metric, self.metric_name, test_metric))
-            self.logger.info('Best Valid %s = %.4f' % (self.metric_name, valid_metric))
+            #                 % (self.metric_name.capitalize(), valid_metric, self.metric_name.capitalize(), test_metric))
+            self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
         # return test_metric
         return None
 

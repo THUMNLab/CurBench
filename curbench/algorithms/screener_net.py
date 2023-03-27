@@ -25,7 +25,7 @@ class ScreenerNet(BaseCL):
         self.lr = 1e-3       
         
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
 
         self.trainData = self._dataloader(self.dataset)
@@ -33,7 +33,7 @@ class ScreenerNet(BaseCL):
         self.weights = torch.zeros(self.data_size)
 
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.weights = self.weights.to(self.device)
         
@@ -43,7 +43,7 @@ class ScreenerNet(BaseCL):
         self.optimizer2 = SGD(self.linear.parameters(), lr=self.lr, weight_decay=0.01)
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.net.train()
         self.vnet_.train()
         self.linear.train()   
@@ -77,7 +77,7 @@ class ScreenerNet(BaseCL):
         return [[image, labels, indices]]
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
 
 

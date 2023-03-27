@@ -24,12 +24,12 @@ class CoarseToFine(BaseCL):
         self.pretrained_model = pretrained_net
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dataloader = loader
     
 
-    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler):
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
 
         self.num_classes = self.net.num_labels

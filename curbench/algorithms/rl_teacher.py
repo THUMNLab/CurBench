@@ -73,12 +73,12 @@ class RLTeacherOnline(BaseCL):
                                for i in range(self.catnum)]
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.data_split()
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         acc = 0
         accs = []
         self.reward = []
@@ -132,12 +132,12 @@ class RLTeacherNaive(BaseCL):
         self.validationData = [self._dataloader(Subset(self.dataset, self.indexs[i][:l[i]]))for i in range(self.catnum)]
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.data_split()
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         acc = 0
         accs = []
         self.reward = []
@@ -199,7 +199,7 @@ class RLTeacherWindow(BaseCL):
         self.validationData = self._dataloader(Subset(temp, range(self.partnum * l, k)))
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.split(loader, 10)
         self.total = np.zeros(self.partnum)
@@ -207,7 +207,7 @@ class RLTeacherWindow(BaseCL):
         self.timesteps = [deque(maxlen=self.window_size) for _ in range(self.partnum)]
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         acc = 0
         for (sample, label, indices) in self.validationData:
             sample = sample.to(self.device)
@@ -253,7 +253,7 @@ class RLTeacherSampling(BaseCL):
         self.prevr = np.zeros(self.partnum)
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         partnum = 10
         temp = self.dataset
@@ -266,7 +266,7 @@ class RLTeacherSampling(BaseCL):
         self.data.append(self._dataloader(Subset(temp, range((self.partnum - 1) * l, k))))
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         self.accs = []
         for i in range(self.partnum):
             acc = 0

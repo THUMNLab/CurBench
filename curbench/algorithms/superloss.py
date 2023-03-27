@@ -20,7 +20,7 @@ class Superloss(BaseCL):
         self.fac = fac
 
 
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         loss = self.criterion(outputs, labels)
         origin_loss = loss.detach().cpu().numpy()
 

@@ -33,7 +33,7 @@ class BabyStep(BaseCL):
         self.not_sorted = not_sorted
 
     
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
 
         self.data_indices = list(range(self.data_size))         # Assume the data is sorted by difficulty.
@@ -41,7 +41,7 @@ class BabyStep(BaseCL):
             random.shuffle(self.data_indices)                   # Else shuffle data to simulate data sorting by difficulty.
 
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         """Measure difficulty and schedule training.
         
         Measure difficulty: Assume the data is sorted by difficulty.

@@ -32,12 +32,12 @@ class Adaptive(BaseCL):
         self.pretrained_model = pretrained_net
 
 
-    def data_prepare(self, loader):
+    def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
         self.dataloader = loader
     
 
-    def data_curriculum(self):
+    def data_curriculum(self, **kwargs):
         if self.epoch == 0:
             self.pretrained_model.to(self.device)
             self.difficulty = torch.Tensor().to(self.device)
@@ -68,7 +68,7 @@ class Adaptive(BaseCL):
         return dataloader
         
     
-    def loss_curriculum(self, outputs, labels, indices):
+    def loss_curriculum(self, outputs, labels, indices, **kwargs):
         losses = torch.mean(self.criterion(outputs, labels))
         epoch_pretrained_output = torch.Tensor().to(self.device)
         for indice in self.data_indice[self.cnt : (self.cnt + self.batch_size)]:
