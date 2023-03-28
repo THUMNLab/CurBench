@@ -15,7 +15,7 @@ def get_net(net_name, dataset):
         'GCNForTUDataset': GCNForGraph,
         'GATForPlanetoid': GATForNode,
         'GATForTUDataset': GATForGraph,
-        'GAGEForPlanetoid': SageForNode,
-        'GAGEForTUDataset': SageForGraph,
+        'SAGEForPlanetoid': SageForNode,
+        'SAGEForTUDataset': SageForGraph,
     }
     return net_dict[net_name](dataset)
