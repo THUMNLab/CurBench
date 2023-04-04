@@ -73,7 +73,7 @@ class LabelNoise(Dataset):
     def __init__(self, dataset, noise_ratio, label_range, label_int=True):
         self.dataset = dataset
         self.noise_ratio = noise_ratio
-        self.label_range = label_range
+        self.label_range = label_range.copy()
         self.label_int = label_int
         if not isinstance(self.label_range, list) or len(self.label_range) != 2 \
             or self.label_range[1] < self.label_range[0]:

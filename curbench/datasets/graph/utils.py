@@ -8,7 +8,7 @@ class LabelNoise(InMemoryDataset):
     def __init__(self, dataset, noise_ratio, label_range):
         self.dataset = dataset
         self.noise_ratio = noise_ratio
-        self.label_range = label_range
+        self.label_range = label_range.copy()
         if not isinstance(self.label_range, list) or len(self.label_range) != 2 \
             or self.label_range[1] < self.label_range[0]:
             raise ValueError('label range should be a list consisting of the lower and upper range')
