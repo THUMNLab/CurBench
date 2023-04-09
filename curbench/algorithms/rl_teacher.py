@@ -71,7 +71,6 @@ class RLTeacherOnline(BaseCL):
 
         self.accs = [0 for _ in range(self.catnum)]
         self.reward = []
-        # self.metric, self.metric_name = get_metric(dataname) # todo
 
 
     def data_split(self):
@@ -117,7 +116,7 @@ class RLTeacherOnline(BaseCL):
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
-                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]  # todo
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
                     acc += valid_metric / len(self.validationData)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
@@ -203,7 +202,7 @@ class RLTeacherNaive(BaseCL):
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
-                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]  # todo
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
                     acc += valid_metric / len(self.validationData)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
@@ -249,7 +248,7 @@ class RLTeacherWindow(BaseCL):
 
         self.window_size = 10
         self.epoch_index = 1
-        
+
 
     def split(self, data_loader, partnum):
         temp = data_loader.dataset
@@ -275,6 +274,7 @@ class RLTeacherWindow(BaseCL):
     def data_curriculum(self, **kwargs):
         acc = 0
         correct =0
+        predictions, references = [],[]
         for data in self.validationData:
             if isinstance(data, list):  # image classifier
                 inputs = data[0].to(self.device)
@@ -293,7 +293,7 @@ class RLTeacherWindow(BaseCL):
                     predictions += outputs.squeeze()
                 else:
                     predictions += outputs.argmax(dim=1).tolist()
-                valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]  # todo
+                valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
                 acc += valid_metric / len(self.validationData)
             elif isinstance(data,pygBatch):  # graph classifier
                 inputs = data.to(self.device)
@@ -379,8 +379,8 @@ class RLTeacherSampling(BaseCL):
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
-                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]  # todo
-                    acc += valid_metric / len(self.Data)
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc += valid_metric / len(self.data)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
                     labels = data.y.to(self.device)
