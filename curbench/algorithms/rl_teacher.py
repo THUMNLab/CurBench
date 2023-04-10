@@ -102,10 +102,10 @@ class RLTeacherOnline(BaseCL):
                 if isinstance(data, list):  # image classifier
                     inputs = data[0].to(self.device)
                     labels = data[1].to(self.device)
-                    out = self.net(inputs)
+                    outputs = self.net(inputs)
                     predicts = outputs.argmax(dim=1)
                     correct += predicts.eq(labels).sum().item()
-                    acc += num_correct/len(self.validationData[i])
+                    acc += correct/len(self.validationData[i])
                 elif isinstance(data, dict):  # text classifier
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
@@ -186,12 +186,12 @@ class RLTeacherNaive(BaseCL):
             predictions, references = [],[]
             for data in self.validationData[i]:
                 if isinstance(data, list):  # image classifier
-                    sample = data[0].to(self.device)
-                    label = data[1].to(self.device)
-                    out = self.net(sample)
-                    _, pred = out.max(1)
-                    num_correct = (pred == label).sum().item()  
-                    acc += num_correct/len(self.validationData[i])
+                    inputs= data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.net(inputs)
+                    _, pred = oututs.max(1)
+                    correct = (pred == label).sum().item()  
+                    acc += correct/len(self.validationData[i])
                 elif isinstance(data, dict):  # text classifier
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
