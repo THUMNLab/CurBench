@@ -189,7 +189,7 @@ class RLTeacherNaive(BaseCL):
                     inputs= data[0].to(self.device)
                     labels = data[1].to(self.device)
                     outputs = self.net(inputs)
-                    _, pred = oututs.max(1)
+                    _, pred = outputs.max(1)
                     correct = (pred == label).sum().item()  
                     acc += correct/len(self.validationData[i])
                 elif isinstance(data, dict):  # text classifier
