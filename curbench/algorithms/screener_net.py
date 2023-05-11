@@ -37,24 +37,23 @@ class ScreenerNet(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        loss = self.criterion(outputs, labels)
+
         self.snet.train()
+        self.fc.train()
         data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
         if isinstance(data, list):          # data from torch.utils.data.Dataset
             inputs = data[0].to(self.device)
-            labels = data[1].to(self.device)
             weights = self.fc(self.snet(inputs)).squeeze()
         elif isinstance(data, dict):        # data from datasets.arrow_dataset.Dataset
             inputs = {k: v.to(self.device) for k, v in data.items() 
                       if k not in ['labels', 'indices']}
-            labels = data['labels'].to(self.device)
             weights = self.fc(self.snet(**inputs)[0]).squeeze()
         elif isinstance(data, pygBatch):    # data from torch_geometric.datasets
             inputs = data.to(self.device)
-            labels = data.y.to(self.device)
             weights = self.fc(self.snet(inputs)).squeeze()
         else:
             not NotImplementedError()
-        loss = self.criterion(outputs, labels)
 
         self.optimizer_s.zero_grad()
         loss_s = ((1.0 - weights) ** 2.0) * loss.detach() + (weights ** 2.0) * F.relu(self.M - loss.detach())

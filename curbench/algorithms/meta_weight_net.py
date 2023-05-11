@@ -71,6 +71,7 @@ class MetaWeightNet(BaseCL):
         for (name, param), grad in zip(meta_net.named_parameters(), grads):
             set_parameter(meta_net, name, param.add(grad, alpha=-self.optimizer.param_groups[0]['lr']))
 
+        meta_net.eval()
         try:
             meta_data = next(self.meta_iter)
         except StopIteration:

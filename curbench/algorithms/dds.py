@@ -17,149 +17,144 @@ class DDS(BaseCL):
     
     Optimizing data usage via differentiable rewards. http://proceedings.mlr.press/v119/wang20p/wang20p.pdf
     """
-    def __init__(self, catnum, epsilon, lr):
+    def __init__(self, eps):
         super(DDS, self).__init__()
 
         self.name = 'dds'
-        self.catnum = catnum
-        self.epsilon = epsilon
-        self.lr = lr   
+        self.eps = eps
 
 
-    def randomSplit(self):
-        """split data into train and validation data by proportion 9:1"""
-        sample_size = self.data_size//10
-        temp = np.array(range(self.data_size))
-        np.random.shuffle(temp)
-        valid_index = temp[:sample_size]
-        train_index = temp[sample_size:]
-        self.validationData = self._dataloader(Subset(self.dataset, valid_index), shuffle=False)
-        self.trainData = self._dataloader(Subset(self.dataset, train_index))
-        self.iter1 = iter(self.trainData)
-        self.iter2 = iter(self.validationData)
+    def _meta_split(self):
+        split = self.data_size // 10
+        indices = np.arange(self.data_size)
+        np.random.shuffle(indices)
+        train_idx, meta_idx = indices[split:], indices[:split]
+        self.train_dataset = Subset(self.dataset, train_idx)
+        self.meta_dataset = Subset(self.dataset, meta_idx)
 
-        self.weights = torch.zeros(self.data_size)
-       
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
-        self.randomSplit()
+        self._meta_split()
+        self.meta_loader = self._dataloader(self.meta_dataset)
+        self.meta_iter = iter(self.meta_loader)
 
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        self.weights = self.weights.to(self.device)
-        self.last_net = copy.deepcopy(self.net)
-        self.vnet_ = copy.deepcopy(self.net)
+        
+        self.scorer = copy.deepcopy(self.net)
         self.fc = nn.Sequential(nn.Linear(self.net.num_labels, 1), nn.Sigmoid()).to(self.device)
-        self.image, self.label, self.indices = next(self.iter1)
+        self.optimizer_s = copy.deepcopy(optimizer)
+        self.optimizer_s.add_param_group({'params': self.scorer.parameters()})
+        self.optimizer_s.add_param_group({'params': self.fc.parameters()})
+        self.optimizer_s.param_groups.pop(0)
 
 
     def data_curriculum(self, **kwargs):
-        self.net.train()
-        self.vnet_.train()
-        self.linear.train()
-        try:
-            temp2 = next(self.iter2)
-        except StopIteration:
-            self.validationData = self._dataloader(self.validationData.dataset)
-            self.iter2 = iter(self.validationData)
-            temp2 = next(self.iter2)
-
-        image, labels, indices = self.image, self.label, self.indices
-        image = image.to(self.device)
-        labels = labels.to(self.device)
-        indices = indices.to(self.device)
-
-        out = self.last_net(image)
-#        self.last_net.zero_grad()
-        with torch.no_grad():
-            loss = self.criterion(out, labels)
-
-        image2, labels2, indices2 = temp2
-        image2 = image2.to(self.device)
-        labels2 = labels2.to(self.device)
-        out2 = self.net(image2)
-        loss2 = self.criterion(out2, labels2)
-        totalloss2 = torch.mean(loss2)
-        self.net.zero_grad()
-        grad = torch.autograd.grad(totalloss2, self.net.parameters(), create_graph=True, retain_graph=True)
-
-        for (name, parameter), j in zip(self.last_net.named_parameters(), grad):
-            parameter.detach_()
-            set_parameter(self.last_net, name, parameter.add(j, alpha = -self.epsilon))
-        with torch.no_grad():
-            loss3 = self.criterion(self.last_net(image), labels)
-        r = (loss3 -loss)/self.epsilon
-        #print(r)
-        out3 = self.vnet_(image)
-        out4 = out3.reshape(out3.size() , -1)
-        out5 = self.linear(out4)
-        out5_norm = torch.sum(out5)
-        if out5_norm != 0:
-            out5_ = out5/out5_norm
-        else:
-            out5_ = out5
-        L = torch.sum(r * torch.log(out5_) )
-
-        grad1 = torch.autograd.grad(L, self.linear.parameters(), create_graph=True, retain_graph=True)
-        grad2 = torch.autograd.grad(L, self.vnet_.parameters())
-        #print(grad1)
-        #print(grad2)
-        for (name, parameter), j in zip(self.linear.named_parameters(), grad1):
-            set_parameter(self.linear, name, parameter.add(j, alpha = -self.lr))
-        for (name, parameter), j in zip(self.vnet_.named_parameters(), grad2):
-            set_parameter(self.vnet_, name, parameter.add(j, alpha = -self.lr))
-        del grad1
-        del grad2
-        del self.last_net
-        self.last_net = copy.deepcopy(self.net)
-
-        try:
-            temp = next(self.iter1)
-        except StopIteration:
-            self.trainData = self._dataloader(self.trainData.dataset)
-            self.iter1 = iter(self.trainData)
-            temp = next(self.iter1)
-        a, b, i = temp
-        self.image = copy.deepcopy(a)
-        self.label = copy.deepcopy(b)
-
-        a = a.to(self.device)
-        #print(a)
-        self.vnet_.eval()
-        self.linear.eval()
-        z = self.vnet_(a)
-        #print(z)
-        w = self.linear(z)    
-        w_norm = torch.sum(w)
-        if w_norm != 0:
-            w_ = w / w_norm
-        else :
-            w_ = w
-        #print(w_)
-#        c = Variable(a, requires_grad=False)
-#        d = Variable(b, requires_grad=False)
-#        e = Variable(w_, requires_grad=False)
-        a.detach_()
-        b.detach_()
-        w_.detach_()
-#        del a
-#        del b
-        self.weights[i] = w.view(1, -1).detach()
-        return [[a, b, i]]
+        return self._dataloader(self.train_dataset, shuffle=True)
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
-        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
+        meta_net = copy.deepcopy(self.net)
+        meta_net.eval()
+        meta_net.zero_grad()
+        try:
+            meta_data = next(self.meta_iter)
+        except StopIteration:
+            self.meta_iter = iter(self.meta_loader)
+            meta_data = next(self.meta_iter)
+        if isinstance(meta_data, list):          # data from torch.utils.data.Dataset
+            meta_inputs = meta_data[0].to(self.device)
+            meta_labels = meta_data[1].to(self.device)
+            meta_outputs = meta_net(meta_inputs)
+        elif isinstance(meta_data, dict):        # data from datasets.arrow_dataset.Dataset
+            meta_inputs = {k: v.to(self.device) for k, v in meta_data.items() 
+                           if k not in ['labels', 'indices']}
+            meta_labels = meta_data['labels'].to(self.device)
+            meta_outputs = meta_net(**meta_inputs)[0]
+        elif isinstance(meta_data, pygBatch):    # data from torch_geometric.datasets
+            meta_inputs = meta_data.to(self.device)
+            meta_labels = meta_data.y.to(self.device)
+            meta_outputs = meta_net(meta_inputs)
+        else:
+            not NotImplementedError()
+        meta_loss = self.criterion(meta_outputs, meta_labels)
+        meta_grads = torch.autograd.grad(torch.mean(meta_loss), (meta_net.parameters()))
+
+        meta_net.train()
+        meta_net.zero_grad()
+        train_data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
+        if isinstance(train_data, list):          # data from torch.utils.data.Dataset
+            train_inputs = train_data[0].to(self.device)
+            train_labels = train_data[1].to(self.device)
+            train_outputs = meta_net(train_inputs)
+        elif isinstance(train_data, dict):        # data from datasets.arrow_dataset.Dataset
+            train_inputs = {k: v.to(self.device) for k, v in train_data.items() 
+                           if k not in ['labels', 'indices']}
+            train_labels = train_data['labels'].to(self.device)
+            train_outputs = meta_net(**train_inputs)[0]
+        elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
+            train_inputs = train_data.to(self.device)
+            train_labels = train_data.y.to(self.device)
+            train_outputs = meta_net(train_inputs)
+        else:
+            not NotImplementedError()
+        train_loss_curr = self.criterion(train_outputs, train_labels)
+
+        for (name, param), grad in zip(meta_net.named_parameters(), meta_grads):
+            set_parameter(meta_net, name, param.add(grad, alpha=-self.eps))
+        train_data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
+        if isinstance(train_data, list):          # data from torch.utils.data.Dataset
+            train_inputs = train_data[0].to(self.device)
+            train_labels = train_data[1].to(self.device)
+            train_outputs = meta_net(train_inputs)
+        elif isinstance(train_data, dict):        # data from datasets.arrow_dataset.Dataset
+            train_inputs = {k: v.to(self.device) for k, v in train_data.items() 
+                           if k not in ['labels', 'indices']}
+            train_labels = train_data['labels'].to(self.device)
+            train_outputs = meta_net(**train_inputs)[0]
+        elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
+            train_inputs = train_data.to(self.device)
+            train_labels = train_data.y.to(self.device)
+            train_outputs = meta_net(train_inputs)
+        else:
+            not NotImplementedError()
+        train_loss_next = self.criterion(train_outputs, train_labels)
+
+        self.scorer.train()
+        self.fc.train()
+        train_data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
+        if isinstance(train_data, list):          # data from torch.utils.data.Dataset
+            train_inputs = train_data[0].to(self.device)
+            train_labels = train_data[1].to(self.device)
+            train_outputs = self.fc(self.scorer(train_inputs)).squeeze()
+        elif isinstance(train_data, dict):        # data from datasets.arrow_dataset.Dataset
+            train_inputs = {k: v.to(self.device) for k, v in train_data.items() 
+                           if k not in ['labels', 'indices']}
+            train_labels = train_data['labels'].to(self.device)
+            train_outputs = self.fc(self.scorer(**train_inputs)[0]).squeeze()
+        elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
+            train_inputs = train_data.to(self.device)
+            train_labels = train_data.y.to(self.device)
+            train_outputs = self.fc(self.scorer(train_inputs)).squeeze()
+        else:
+            not NotImplementedError()
+        self.optimizer_s.zero_grad()
+        loss_s = (1.0 / self.eps * (train_loss_next - train_loss_curr)) * torch.log(train_outputs)
+        torch.mean(loss_s).backward()
+        self.optimizer_s.step()
+
+        loss = self.criterion(outputs, labels).view(-1, 1)
+        weights = train_outputs
+        return torch.mean(loss * weights.detach())
 
 
 
 class DDSTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
-                 catnum, epsilon, lr):
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, eps):
         
-        cl = DDS(catnum, epsilon, lr)
+        cl = DDS(eps)
 
         super(DDSTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)
