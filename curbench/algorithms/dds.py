@@ -8,7 +8,7 @@ from torch.utils.data import Subset
 from torch.optim.sgd import SGD
 import numpy as np
 
-from .utils import VNet_, set_parameter
+from .utils import VNet, set_parameter
 
 
 
@@ -51,7 +51,7 @@ class DDS(BaseCL):
         self.weights = self.weights.to(self.device)
         self.last_net = copy.deepcopy(self.net)
         self.vnet_ = copy.deepcopy(self.net)
-        self.linear = VNet_(self.catnum, 1).to(self.device)
+        self.fc = nn.Sequential(nn.Linear(self.net.num_labels, 1), nn.Sigmoid()).to(self.device)
         self.image, self.label, self.indices = next(self.iter1)
 
 

@@ -4,28 +4,22 @@ import torch.nn as nn
 
 
 
-######## VNet for MetaReweight, MetaWeightNet and DDS #######
+######## For MetaReweight, MetaWeightNet and DDS #######
 class VNet(nn.Module):
     def __init__(self, input, hidden, output):
         super(VNet, self).__init__()
         self.linear1 = nn.Linear(input, hidden)
-        self.relu = nn.ReLU(inplace=True)
         self.linear2 = nn.Linear(hidden, output)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.linear1(x)
         x = self.relu(x)
-        out = self.linear2(x)
-        return torch.sigmoid(out)
+        x = self.linear2(x)
+        out = self.sigmoid(x)
+        return out
 
-class VNet_(nn.Module):
-    def __init__(self, input, hidden):
-        super(VNet_, self).__init__()
-        self.linear1 = nn.Linear(input, hidden)
-
-    def forward(self, x):
-        x = self.linear1(x)
-        return torch.sigmoid(x)
 
 def set_parameter(current_module, name, parameters):
         if '.' in name:

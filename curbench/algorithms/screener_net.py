@@ -1,13 +1,11 @@
-from .base import BaseTrainer, BaseCL
 import copy
-from torch.autograd import Variable
-
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import Subset
-from torch.optim.sgd import SGD
+from torch_geometric.data.batch import Batch as pygBatch
 
-from .utils import VNet_, set_parameter
+from .base import BaseTrainer, BaseCL
 
 
 
@@ -16,76 +14,59 @@ class ScreenerNet(BaseCL):
     
     Screenernet: Learning self-paced curriculum for deep neural networks. https://arxiv.org/pdf/1801.00904
     """
-    def __init__(self, ):
+    def __init__(self, M):
         super(ScreenerNet, self).__init__()
 
         self.name = 'screener_net'
-
-        self.catnum = 10
-        self.lr = 1e-3       
+        self.M = M
         
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
 
-        self.trainData = self._dataloader(self.dataset)
-        self.iter = iter(self.trainData)
-        self.weights = torch.zeros(self.data_size)
-
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        self.weights = self.weights.to(self.device)
         
-        self.vnet_ = copy.deepcopy(self.net)
-        self.linear = VNet_(self.catnum, 1).to(self.device)
-        self.optimizer1 = SGD(self.vnet_.parameters(), lr=self.lr, weight_decay=0.01)
-        self.optimizer2 = SGD(self.linear.parameters(), lr=self.lr, weight_decay=0.01)
-
-
-    def data_curriculum(self, **kwargs):
-        self.net.train()
-        self.vnet_.train()
-        self.linear.train()   
-        try:
-            temp = next(self.iter)
-        except StopIteration:
-            self.trainData = self._dataloader(self.trainData.dataset)
-            self.iter = iter(self.trainData)
-            temp = next(self.iter)
-        image, labels, indices = temp
-        image = image.to(self.device)
-        labels = labels.to(self.device)
-        indices = indices.to(self.device)
-        l = self.criterion(self.net(image), labels)
-        w = self.linear(self.vnet_(image))
-        L = Variable(torch.zeros(1), requires_grad=True).to(self.device)
-        for i, j in zip(l, w):
-            L = L+ (1-j)*(1-j)*i + j*j*max(1-i, 0)
-        L.backward()
-        self.optimizer1.step()
-        self.optimizer2.step()
-        w_tilde = self.linear(self.vnet_(image))
-        norm_c = torch.sum(w_tilde)
-
-        if norm_c != 0:
-            w = w_tilde / norm_c
-        else:
-            w = w_tilde
-        w = w * self.batch_size
-        self.weights[indices] = w.view(1, -1).detach()
-        return [[image, labels, indices]]
+        self.snet = copy.deepcopy(self.net)
+        self.fc = nn.Sequential(nn.Linear(self.net.num_labels, 1), nn.Sigmoid()).to(self.device)
+        self.optimizer_s = copy.deepcopy(optimizer)
+        self.optimizer_s.add_param_group({'params': self.snet.parameters()})
+        self.optimizer_s.add_param_group({'params': self.fc.parameters()})
+        self.optimizer_s.param_groups.pop(0)
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
-        return torch.mean(self.criterion(outputs, labels) * self.weights[indices])
+        self.snet.train()
+        data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
+        if isinstance(data, list):          # data from torch.utils.data.Dataset
+            inputs = data[0].to(self.device)
+            labels = data[1].to(self.device)
+            weights = self.fc(self.snet(inputs)).squeeze()
+        elif isinstance(data, dict):        # data from datasets.arrow_dataset.Dataset
+            inputs = {k: v.to(self.device) for k, v in data.items() 
+                      if k not in ['labels', 'indices']}
+            labels = data['labels'].to(self.device)
+            weights = self.fc(self.snet(**inputs)[0]).squeeze()
+        elif isinstance(data, pygBatch):    # data from torch_geometric.datasets
+            inputs = data.to(self.device)
+            labels = data.y.to(self.device)
+            weights = self.fc(self.snet(inputs)).squeeze()
+        else:
+            not NotImplementedError()
+        loss = self.criterion(outputs, labels)
 
+        self.optimizer_s.zero_grad()
+        loss_s = ((1.0 - weights) ** 2.0) * loss.detach() + (weights ** 2.0) * F.relu(self.M - loss.detach())
+        torch.mean(loss_s).backward()
+        self.optimizer_s.step()
+        return torch.mean(loss * weights.detach())
 
 
 class ScreenerNetTrainer(BaseTrainer):
-    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed):
+    def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, M):
         
-        cl = ScreenerNet()
+        cl = ScreenerNet(M)
 
         super(ScreenerNetTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)
