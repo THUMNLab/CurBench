@@ -56,6 +56,8 @@ class DDS(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        loss = self.criterion(outputs, labels)
+
         meta_net = copy.deepcopy(self.net)
         meta_net.eval()
         meta_net.zero_grad()
@@ -124,29 +126,23 @@ class DDS(BaseCL):
 
         self.scorer.train()
         self.fc.train()
-        train_data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
-        if isinstance(train_data, list):          # data from torch.utils.data.Dataset
-            train_inputs = train_data[0].to(self.device)
-            train_labels = train_data[1].to(self.device)
-            train_outputs = self.fc(self.scorer(train_inputs)).squeeze()
-        elif isinstance(train_data, dict):        # data from datasets.arrow_dataset.Dataset
-            train_inputs = {k: v.to(self.device) for k, v in train_data.items() 
+        data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
+        if isinstance(data, list):          # data from torch.utils.data.Dataset
+            inputs = data[0].to(self.device)
+            weights = self.fc(self.scorer(inputs)).squeeze()
+        elif isinstance(data, dict):        # data from datasets.arrow_dataset.Dataset
+            inputs = {k: v.to(self.device) for k, v in data.items() 
                            if k not in ['labels', 'indices']}
-            train_labels = train_data['labels'].to(self.device)
-            train_outputs = self.fc(self.scorer(**train_inputs)[0]).squeeze()
-        elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
-            train_inputs = train_data.to(self.device)
-            train_labels = train_data.y.to(self.device)
-            train_outputs = self.fc(self.scorer(train_inputs)).squeeze()
+            weights = self.fc(self.scorer(**inputs)[0]).squeeze()
+        elif isinstance(data, pygBatch):    # data from torch_geometric.datasets
+            inputs = data.to(self.device)
+            weights = self.fc(self.scorer(inputs)).squeeze()
         else:
             not NotImplementedError()
         self.optimizer_s.zero_grad()
-        loss_s = (1.0 / self.eps * (train_loss_next - train_loss_curr)) * torch.log(train_outputs)
+        loss_s = (1.0 / self.eps * (train_loss_next - train_loss_curr)) * torch.log(weights)
         torch.mean(loss_s).backward()
         self.optimizer_s.step()
-
-        loss = self.criterion(outputs, labels).view(-1, 1)
-        weights = train_outputs
         return torch.mean(loss * weights.detach())
 
 
