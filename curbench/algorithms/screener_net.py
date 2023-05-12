@@ -37,6 +37,7 @@ class ScreenerNet(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        if not isinstance(indices, list): indices = indices.tolist()
         loss = self.criterion(outputs, labels)
 
         self.snet.train()

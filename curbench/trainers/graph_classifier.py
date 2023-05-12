@@ -2,6 +2,7 @@ import os
 import time
 import torch
 import torch_geometric as pyg
+from tqdm import tqdm
 
 from ..datasets.graph import get_dataset
 from ..backbones.graph import get_net
@@ -77,7 +78,7 @@ class GraphClassifier():
             net = self.model_curriculum()                               # curriculum part
 
             net.train()
-            for step, data in enumerate(loader):
+            for step, data in enumerate(tqdm(loader)):
                 inputs = data.to(self.device)
                 labels = data.y.to(self.device)
                 indices = data.i.to(self.device)

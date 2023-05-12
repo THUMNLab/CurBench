@@ -1,14 +1,11 @@
-from .base import BaseTrainer, BaseCL
-
 import copy
-
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Subset
-from torch.optim.sgd import SGD
-import numpy as np
 
-from .utils import VNet, set_parameter
+from .base import BaseTrainer, BaseCL
+from .utils import set_parameter
 
 
 
@@ -26,7 +23,7 @@ class DDS(BaseCL):
 
     def _meta_split(self):
         split = self.data_size // 10
-        indices = np.arange(self.data_size)
+        indices = list(range(self.data_size))
         np.random.shuffle(indices)
         train_idx, meta_idx = indices[split:], indices[:split]
         self.train_dataset = Subset(self.dataset, train_idx)
@@ -56,10 +53,11 @@ class DDS(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        if not isinstance(indices, list): indices = indices.tolist()
         loss = self.criterion(outputs, labels)
 
         meta_net = copy.deepcopy(self.net)
-        meta_net.eval()
+        meta_net.train()
         meta_net.zero_grad()
         try:
             meta_data = next(self.meta_iter)
@@ -84,8 +82,6 @@ class DDS(BaseCL):
         meta_loss = self.criterion(meta_outputs, meta_labels)
         meta_grads = torch.autograd.grad(torch.mean(meta_loss), (meta_net.parameters()))
 
-        meta_net.train()
-        meta_net.zero_grad()
         train_data = next(iter(self._dataloader(Subset(self.dataset, indices), shuffle=False)))
         if isinstance(train_data, list):          # data from torch.utils.data.Dataset
             train_inputs = train_data[0].to(self.device)

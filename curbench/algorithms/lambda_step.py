@@ -50,7 +50,7 @@ class LambdaStep(BaseCL):
         
         data_rate = min(1.0, self._subset_grow())               # Current proportion of sampled data.
         data_size = int(self.data_size * data_rate)             # Current number of sampled data.
-        data_indices = self.data_indices[:data_size]            # Current indices of samples data.
+        data_indices = self.data_indices[:data_size].tolist()   # Current indices of samples data.
 
         dataset = Subset(self.dataset, data_indices)
         return self._dataloader(dataset)

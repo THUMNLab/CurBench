@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+from tqdm import tqdm
 
 from ..datasets.vision import get_dataset
 from ..backbones.vision import get_net
@@ -86,7 +87,7 @@ class ImageClassifier():
             net = self.model_curriculum()                               # curriculum part
 
             net.train()
-            for step, data in enumerate(loader):
+            for step, data in enumerate(tqdm(loader)):
                 inputs = data[0].to(self.device)
                 labels = data[1].to(self.device)
                 indices = data[2].to(self.device)

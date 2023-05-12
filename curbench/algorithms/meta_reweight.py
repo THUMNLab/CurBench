@@ -1,8 +1,8 @@
 import copy
 import numpy as np
 import torch
-import torch.nn as nn
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 from .utils import set_parameter
@@ -21,7 +21,7 @@ class MetaReweight(BaseCL):
 
     def _meta_split(self):
         split = self.data_size // 10
-        indices = np.arange(self.data_size)
+        indices = list(range(self.data_size))
         np.random.shuffle(indices)
         train_idx, meta_idx = indices[split:], indices[:split]
         self.train_dataset = Subset(self.dataset, train_idx)
@@ -40,6 +40,8 @@ class MetaReweight(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        if not isinstance(indices, list): indices = indices.tolist()
+        
         meta_net = copy.deepcopy(self.net)
         meta_net.train()
         meta_net.zero_grad()

@@ -1,8 +1,8 @@
 import copy
 import numpy as np
 import torch
-import torch.nn as nn
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 from .utils import VNet, set_parameter
@@ -21,7 +21,7 @@ class MetaWeightNet(BaseCL):
 
     def _meta_split(self):
         split = self.data_size // 10
-        indices = np.arange(self.data_size)
+        indices = list(range(self.data_size))
         np.random.shuffle(indices)
         train_idx, meta_idx = indices[split:], indices[:split]
         self.train_dataset = Subset(self.dataset, train_idx)
@@ -46,6 +46,8 @@ class MetaWeightNet(BaseCL):
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
+        if not isinstance(indices, list): indices = indices.tolist()
+        
         meta_net = copy.deepcopy(self.net)
         meta_net.train()
         meta_net.zero_grad()
@@ -71,7 +73,6 @@ class MetaWeightNet(BaseCL):
         for (name, param), grad in zip(meta_net.named_parameters(), grads):
             set_parameter(meta_net, name, param.add(grad, alpha=-self.optimizer.param_groups[0]['lr']))
 
-        meta_net.eval()
         try:
             meta_data = next(self.meta_iter)
         except StopIteration:

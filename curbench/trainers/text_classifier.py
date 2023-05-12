@@ -1,6 +1,7 @@
 import os
 import time
 import torch
+from tqdm import tqdm
 
 from ..datasets.text import get_dataset, get_metric
 from ..backbones.text import get_net, get_tokenizer
@@ -95,7 +96,7 @@ class TextClassifier():
             net = self.model_curriculum()                               # curriculum part
 
             net.train()
-            for step, data in enumerate(loader):
+            for step, data in enumerate(tqdm(loader)):
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                           if k not in ['labels', 'indices']}
                 labels = data['labels'].to(self.device)
