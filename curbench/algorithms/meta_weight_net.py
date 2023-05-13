@@ -86,8 +86,7 @@ class MetaWeightNet(BaseCL):
             meta_inputs = {k: v.to(self.device) for k, v in meta_data.items() 
                            if k not in ['labels', 'indices']}
             meta_labels = meta_data['labels'].to(self.device)
-            with torch.backends.cudnn.flags(enabled=False):
-                meta_outputs = meta_net(**meta_inputs)[0]
+            meta_outputs = meta_net(**meta_inputs)[0]
         elif isinstance(meta_data, pygBatch):    # data from torch_geometric.datasets
             meta_inputs = meta_data.to(self.device)
             meta_labels = meta_data.y.to(self.device)
