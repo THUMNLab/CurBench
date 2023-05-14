@@ -96,7 +96,7 @@ class TextClassifier():
             net = self.model_curriculum()                               # curriculum part
 
             net.train()
-            for step, data in enumerate(tqdm(loader)):
+            for data in tqdm(loader):
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                           if k not in ['labels', 'indices']}
                 labels = data['labels'].to(self.device)
@@ -159,14 +159,8 @@ class TextClassifier():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
-            valid_metric = self._valid(valid_loader)
-            # test_metric = self._valid(test_loader)
-            # self.logger.info('Best Valid %s = %.4f and Final Test %s = %.4f' 
-            #                 % (self.metric_name.capitalize(), valid_metric, self.metric_name.capitalize(), test_metric))
-            self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
-        # return test_metric
-        return None
+        valid_acc = self._valid(self.valid_loader)
+        self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
 
 
     def export(self, net_dir=None):

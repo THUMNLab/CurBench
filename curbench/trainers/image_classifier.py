@@ -87,7 +87,7 @@ class ImageClassifier():
             net = self.model_curriculum()                               # curriculum part
 
             net.train()
-            for step, data in enumerate(tqdm(loader)):
+            for data in tqdm(loader):
                 inputs = data[0].to(self.device)
                 labels = data[1].to(self.device)
                 indices = data[2].to(self.device)
