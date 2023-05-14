@@ -26,7 +26,7 @@ class DataParameters(BaseCL):
         self.class_size = self.net.num_labels
         
         self.data_weights = torch.tensor(
-            np.ones(self.data_size) * np.log(self.lr_data_param),
+            np.ones(self.data_size) * np.log(self.init_data_param),
             dtype=torch.float32, requires_grad=True, device=self.device
         )
         self.data_optimizer = SparseSGD([self.data_weights], 
@@ -35,7 +35,7 @@ class DataParameters(BaseCL):
         self.data_optimizer.zero_grad()
 
         self.class_weights = torch.tensor(
-            np.ones(self.class_size) * np.log(self.lr_class_param),
+            np.ones(self.class_size) * np.log(self.init_class_param),
             dtype=torch.float32, requires_grad=True, device=self.device
         )
         self.class_optimizer = SparseSGD([self.class_weights], 
