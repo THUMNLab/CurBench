@@ -46,7 +46,7 @@ class TextClassifier():
             self.test_loader = [torch.utils.data.DataLoader(
                 dataset['test'], batch_size=50, pin_memory=True)]
 
-        self.data_prepare(self.train_loader, metric=self.metric)        # curriculum part
+        self.data_prepare(self.train_loader, metric=self.metric, metric_name = self.metric_name)        # curriculum part
 
 
     def _init_model(self, net_name, gpu_index, num_epochs):

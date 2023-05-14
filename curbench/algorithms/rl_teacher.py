@@ -1,9 +1,9 @@
 from collections import deque
 import numpy as np
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
-
 
 
 def estimate_slope(x, y):
@@ -42,6 +42,16 @@ class ThompsonPolicy(EpsilonGreedyPolicy):
     pass
 
 
+class BoltsmannPolicy:
+    def __init__(self, temperature=1.) -> None:
+        self.temperature = temperature
+
+    def __call__(self, Q):
+        e = np.exp((Q-np.max(Q))/self.temperature)
+        p = e/np.sum(e)
+        assert np.isclose(np.sum(p), 1)
+        return p
+
 
 class RLTeacherOnline(BaseCL):
     """Reinforcement Learning Teacher CL Algorithm. 
@@ -56,10 +66,10 @@ class RLTeacherOnline(BaseCL):
 
         self.catnum = 10
         self.alpha = 0.1
-        self.total = [0 for i in range(self.catnum)]
+        self.total = [0 for _ in range(self.catnum)]
         self.abs = False
 
-        self.accs = [0 for i in range(self.catnum)]
+        self.accs = [0 for _ in range(self.catnum)]
         self.reward = []
 
 
@@ -75,6 +85,8 @@ class RLTeacherOnline(BaseCL):
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
+        self.metric = kwargs.get("metric")
+        self.metric_name = kwargs.get("metric_name")
         self.data_split()
 
 
@@ -84,14 +96,39 @@ class RLTeacherOnline(BaseCL):
         self.reward = []
         for i in range(self.catnum):
             acc = 0
-            for (sample, label, indices) in self.validationData[i]:
-                sample = sample.to(self.device)
-                label = label.to(self.device)
-                out = self.net(sample)
-                _, pred = out.max(1)
-                num_correct = (pred == label).sum().item()
-                acc += num_correct/len(self.validationData[i])
+            correct =0
+            predictions, references = [],[]
+            for data in self.validationData[i]:
+                if isinstance(data, list):  # image classifier
+                    inputs = data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc += correct/len(self.validationData[i])
+                elif isinstance(data, dict):  # text classifier
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.net(**inputs)[0]
+                    references += labels.tolist()
+                    if self.net.num_labels ==1:
+                        predictions += outputs.squeeze()
+                    else:
+                        predictions += outputs.argmax(dim=1).tolist()
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc += valid_metric / len(self.validationData)
+                elif isinstance(data,pygBatch):  # graph classifier
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc += correct/len(self.validationData[i])
+                else:
+                    raise NotImplementedError()
             accs.append(acc)
+
         for i, j in zip(accs, self.accs):
             self.reward.append(i-j)
         self.accs = accs
@@ -134,6 +171,8 @@ class RLTeacherNaive(BaseCL):
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
+        self.metric = kwargs.get("metric")
+        self.metric_name = kwargs.get("metric_name")
         self.data_split()
 
 
@@ -143,13 +182,37 @@ class RLTeacherNaive(BaseCL):
         self.reward = []
         for i in range(self.catnum):
             acc = 0
-            for (sample, label, indices) in self.validationData[i]:
-                sample = sample.to(self.device)
-                label = label.to(self.device)
-                out = self.net(sample)
-                _, pred = out.max(1)
-                num_correct = (pred == label).sum().item()
-                acc += num_correct/len(self.validationData[i])
+            correct =0
+            predictions, references = [],[]
+            for data in self.validationData[i]:
+                if isinstance(data, list):  # image classifier
+                    inputs= data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.net(inputs)
+                    _, pred = outputs.max(1)
+                    correct = (pred == labels).sum().item()  
+                    acc += correct/len(self.validationData[i])
+                elif isinstance(data, dict):  # text classifier
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.net(**inputs)[0]
+                    references += labels.tolist()
+                    if self.net.num_labels ==1:
+                        predictions += outputs.squeeze()
+                    else:
+                        predictions += outputs.argmax(dim=1).tolist()
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc += valid_metric / len(self.validationData)
+                elif isinstance(data,pygBatch):  # graph classifier
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc += correct/len(self.validationData[i])
+                else:
+                    raise NotImplementedError()
             accs.append(acc)
         for i, j in zip(accs, self.accs):
             self.reward.append(i-j)
@@ -168,7 +231,6 @@ class RLTeacherNaive(BaseCL):
 
         return self.data_loader
 
-
 class RLTeacherWindow(BaseCL):
     def __init__(self, ):
         super(RLTeacherWindow, self).__init__()
@@ -186,7 +248,7 @@ class RLTeacherWindow(BaseCL):
 
         self.window_size = 10
         self.epoch_index = 1
-        
+
 
     def split(self, data_loader, partnum):
         temp = data_loader.dataset
@@ -201,6 +263,8 @@ class RLTeacherWindow(BaseCL):
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
+        self.metric = kwargs.get("metric")
+        self.metric_name = kwargs.get("metric_name")
         self.split(loader, 10)
         self.total = np.zeros(self.partnum)
         self.scores = [deque(maxlen=self.window_size) for _ in range(self.partnum)]
@@ -209,15 +273,38 @@ class RLTeacherWindow(BaseCL):
 
     def data_curriculum(self, **kwargs):
         acc = 0
-        for (sample, label, indices) in self.validationData:
-            sample = sample.to(self.device)
-            label = label.to(self.device)
-            out = self.net(sample)
-            _, pred = out.max(1)
-            num_correct = (pred == label).sum().item()
-            acc += num_correct/len(self.validationData)
-        self.reward = acc - self.acc
-        self.acc = acc
+        correct =0
+        predictions, references = [],[]
+        for data in self.validationData:
+            if isinstance(data, list):  # image classifier
+                inputs = data[0].to(self.device)
+                labels = data[1].to(self.device)
+                outputs = self.net(inputs)
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
+                acc += correct/len(self.validationData)
+            elif isinstance(data, dict):  # text classifier
+                inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                labels = data['labels'].to(self.device)
+                outputs = self.net(**inputs)[0]
+                references += labels.tolist()
+                if self.net.num_labels ==1:
+                    predictions += outputs.squeeze()
+                else:
+                    predictions += outputs.argmax(dim=1).tolist()
+                valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                acc += valid_metric / len(self.validationData)
+            elif isinstance(data,pygBatch):  # graph classifier
+                inputs = data.to(self.device)
+                labels = data.y.to(self.device)
+                outputs = self.net(inputs)
+                predicts = outputs.argmax(dim=1)
+                correct += predicts.eq(labels).sum().item()
+                acc += correct/len(self.validationData)
+            else:
+                raise NotImplementedError()
+        self.reward, self.acc = acc - self.acc, acc
 
         self.scores[self.training].append(self.acc)
         self.timesteps[self.training].append(self.epoch_index)
@@ -255,6 +342,8 @@ class RLTeacherSampling(BaseCL):
 
     def data_prepare(self, loader, **kwargs):
         super().data_prepare(loader)
+        self.metric = kwargs.get("metric")
+        self.metric_name = kwargs.get("metric_name")
         partnum = 10
         temp = self.dataset
         k = len(temp)
@@ -270,14 +359,39 @@ class RLTeacherSampling(BaseCL):
         self.accs = []
         for i in range(self.partnum):
             acc = 0
-            for (sample, label, indices) in self.data[i]:
-                sample = sample.to(self.device)
-                label = label.to(self.device)
-                out = self.net(sample)
-                _, pred = out.max(1)
-                num_correct = (pred == label).sum().item()
-                acc += num_correct/len(self.data[i])
+            correct = 0
+            predictions, references = [],[]
+            for data in self.data[i]:
+                if isinstance(data, list):  # image classifier
+                    inputs = data[0].to(self.device)
+                    labels = data[1].to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc += correct/len(self.data[i])
+                elif isinstance(data, dict):  # text classifier
+                    inputs = {k: v.to(self.device) for k, v in data.items() 
+                              if k not in ['labels', 'indices']}
+                    labels = data['labels'].to(self.device)
+                    outputs = self.net(**inputs)[0]
+                    references += labels.tolist()
+                    if self.net.num_labels ==1:
+                        predictions += outputs.squeeze()
+                    else:
+                        predictions += outputs.argmax(dim=1).tolist()
+                    valid_metric = self.metric.compute(predictions=predictions,references=references)[self.metric_name]
+                    acc += valid_metric / len(self.data)
+                elif isinstance(data,pygBatch):  # graph classifier
+                    inputs = data.to(self.device)
+                    labels = data.y.to(self.device)
+                    outputs = self.net(inputs)
+                    predicts = outputs.argmax(dim=1)
+                    correct += predicts.eq(labels).sum().item()
+                    acc += correct/len(self.data[i])
+                else:
+                    raise NotImplementedError()
             self.accs.append(acc)
+
         if len(self.dscores) > 0:
             if isinstance(self.policy, ThompsonPolicy):
                 slopes = [np.random.choice(drs) for drs in np.array(self.dscores).T]
