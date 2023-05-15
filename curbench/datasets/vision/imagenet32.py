@@ -10,8 +10,6 @@ from PIL import Image
 from torch.utils.data import Subset, Dataset
 from torchvision import transforms
 
-from .utils import Cutout
-
 
 class ImageNet32(Dataset):
     """`ImageNet 32x32 <https://patrykchrabaszcz.github.io/Imagenet32/>`_ Dataset.
@@ -46,7 +44,6 @@ class ImageNet32(Dataset):
 
         self.data: Any = []
         self.targets = []
-        self.num_classes = 1000
 
         # now load the picked numpy arrays
         for file_name in downloaded_list:
@@ -89,30 +86,27 @@ class ImageNet32(Dataset):
         return f"Split: {split}"
 
 
-def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1, augment=True, cutout_length=0):
+def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
     
     MEAN = [0.485, 0.456, 0.406]
     STD = [0.229, 0.224, 0.225]
 
-    transf = [
+    train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-    ] if augment else []
-    normalize = [
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
-    ]
-    cutout = [Cutout(cutout_length)] \
-      if cutout_length > 0 else []
-    
-    train_transform = transforms.Compose(transf + normalize + cutout)
-    test_transform = transforms.Compose(normalize)
+    ])
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD),
+    ])
 
-    train_dataset = ImageNet32('data', train=True, transform=train_transform)
-    valid_dataset = ImageNet32('data', train=True, transform=test_transform)
-    test_dataset = ImageNet32('data', train=False, transform=test_transform)
+    train_dataset = ImageNet32(data_dir, train=True, transform=train_transform)
+    valid_dataset = ImageNet32(data_dir, train=True, transform=test_transform)
+    test_dataset = ImageNet32(data_dir, train=False, transform=test_transform)
 
     num_train = len(train_dataset)
     indices = list(range(num_train))
@@ -122,6 +116,9 @@ def get_imagenet32_dataset(data_dir='data', valid_ratio=0.1, augment=True, cutou
     train_idx, valid_idx = indices[split:], indices[:split]
     train_dataset = Subset(train_dataset, train_idx)
     valid_dataset = Subset(valid_dataset, valid_idx)
+    test_dataset.__setattr__('name', 'imagenet32')
+    test_dataset.__setattr__('num_classes', 1000)
+    test_dataset.__setattr__('image_size', 32)
 
     return train_dataset, valid_dataset, test_dataset
 

@@ -63,7 +63,7 @@ class Minimax(BaseCL):
         else:
             self.delta = self.delta * self.data_size
 
-        self.num_classes = self.net.num_labels
+        self.num_classes = self.net.num_classes
 
 
     def data_curriculum(self, **kwargs):
@@ -165,11 +165,11 @@ class Minimax(BaseCL):
     
 
     def _entropy(self, labels, base=None):
-        num_labels = len(labels)
+        num_classes = len(labels)
         value, count = np.unique(labels, return_counts=True)
-        prob = count / num_labels
+        prob = count / num_classes
         num_classes = np.count_nonzero(prob)
-        if num_labels <= 1 or num_classes <= 1:
+        if num_classes <= 1 or num_classes <= 1:
             return 1
         entro = 0
         if base == None:

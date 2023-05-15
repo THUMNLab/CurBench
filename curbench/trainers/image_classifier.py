@@ -28,16 +28,16 @@ class ImageClassifier():
     def _init_dataloader(self, data_name):
         # standard:  'cifar10'
         # noise:     'cifar10-noise-0.4', 
-        # imbalance: 'cifar10-imbalance-dominant-[0,1]-4-5-0.8', 'cifar10-imbalance-exp-[0,1]-4-5-0.8'
-        self.dataset = get_dataset(data_name) # data format is list: [train, valid, test]
+        # imbalance: 'cifar10-imbalance-50'
+        self.dataset = get_dataset(data_name) # data format is tuple: (train, valid, test)
         
         train_dataset, valid_dataset, test_dataset = self.dataset
         self.train_loader = torch.utils.data.DataLoader(
-            train_dataset, batch_size=50, shuffle=True, pin_memory=True)
+            train_dataset, batch_size=50, shuffle=True, pin_memory=True, num_workers=4)
         self.valid_loader = torch.utils.data.DataLoader(
-            valid_dataset, batch_size=50, shuffle=False, pin_memory=True)
+            valid_dataset, batch_size=50, shuffle=False, pin_memory=True, num_workers=4)
         self.test_loader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=50, shuffle=False, pin_memory=True)
+            test_dataset, batch_size=50, shuffle=False, pin_memory=True, num_workers=4)
 
         self.data_prepare(self.train_loader)                            # curriculum part
 
@@ -50,15 +50,20 @@ class ImageClassifier():
 
         self.epochs = num_epochs
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-        if net_name in ['lenet', 'vit']:                                # for vit, lenet
+        if net_name == 'lenet':
             self.optimizer = torch.optim.AdamW(
-                self.net.parameters(), lr=0.001, weight_decay=0.1)
+                self.net.parameters(), lr=0.001, weight_decay=0.01)
             self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
-        else:                                                           # for resnet
+        elif net_name == 'resnet18':
             self.optimizer = torch.optim.SGD(
                 self.net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
             self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR( 
                 self.optimizer, T_max=self.epochs, eta_min=1e-6)
+        elif net_name == 'vit':
+            self.optimizer = torch.optim.AdamW(
+                self.net.parameters(), lr=0.001, weight_decay=0.01)
+            self.lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
+                self.optimizer, max_lr=0.001, total_steps=len(self.train_loader)*self.epochs)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
@@ -105,7 +110,7 @@ class ImageClassifier():
 
             self.lr_scheduler.step()
             self.logger.info(
-                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
+                '[%3d]  Train Data = %7d  Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
@@ -114,7 +119,7 @@ class ImageClassifier():
                     best_acc = valid_acc
                     torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
-                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
+                    '[%3d]  Valid Data = %7d  Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
             
 

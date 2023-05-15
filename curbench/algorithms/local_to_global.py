@@ -27,7 +27,7 @@ class LocalToGlobal(BaseCL):
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        self.class_size = self.net.num_labels
+        self.class_size = self.net.num_classes
         self.init_scheduler_state = self.lr_scheduler.state_dict()
         # TODO: update T_max of lr_scheduler
 

@@ -8,29 +8,24 @@ import numpy as np
 from torch.utils.data import Subset
 from torchvision import datasets, transforms
 
-from .utils import Cutout
 
-
-def get_cifar10_dataset(data_dir='data', valid_ratio=0.1, augment=True, cutout_length=0):
+def get_cifar10_dataset(data_dir='data', valid_ratio=0.1):
     assert ((valid_ratio >= 0) and (valid_ratio <= 1)), \
         'Assert Error: valid_size should be in the range [0, 1].'
 
     MEAN = [0.4914, 0.4822, 0.4465]
     STD = [0.2470, 0.2435, 0.2616]
 
-    transf = [
+    train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-    ] if augment else []
-    normalize = [
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
-    ]
-    cutout = [Cutout(cutout_length)] \
-      if cutout_length > 0 else []
-    
-    train_transform = transforms.Compose(transf + normalize + cutout)
-    test_transform = transforms.Compose(normalize)
+    ])
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD),
+    ])
 
     train_dataset = datasets.CIFAR10(
         root=data_dir, train=True, 
@@ -53,6 +48,8 @@ def get_cifar10_dataset(data_dir='data', valid_ratio=0.1, augment=True, cutout_l
     train_idx, valid_idx = indices[split:], indices[:split]
     train_dataset = Subset(train_dataset, train_idx)
     valid_dataset = Subset(valid_dataset, valid_idx)
+    test_dataset.__setattr__('name', 'cifar10')
     test_dataset.__setattr__('num_classes', 10)
+    test_dataset.__setattr__('image_size', 32)
 
     return train_dataset, valid_dataset, test_dataset

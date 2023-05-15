@@ -32,7 +32,7 @@ class CoarseToFine(BaseCL):
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
 
-        self.num_classes = self.net.num_labels
+        self.num_classes = self.net.num_classes
         self.confusion_matrix = torch.zeros(self.num_classes ** 2)
         self.confusion_matrix = self.confusion_matrix.reshape(self.num_classes, self.num_classes)
 

@@ -116,7 +116,7 @@ class BaseTrainer():
         If the dataset is not a predefined one, users can create a custom Model Trainer.
         """
         trainer_dict = {
-            'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier,
+            'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier, 'tinyimagenet': ImageClassifier,
 
             'cola': TextClassifier, 'sst2': TextClassifier, 'mrpc': TextClassifier, 'qqp': TextClassifier, 'stsb': TextClassifier, 
             'mnli': TextClassifier, 'qnli': TextClassifier, 'rte': TextClassifier, 'wnli': TextClassifier,

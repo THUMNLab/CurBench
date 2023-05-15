@@ -112,7 +112,7 @@ class RLTeacherOnline(BaseCL):
                     labels = data['labels'].to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
-                    if self.net.num_labels ==1:
+                    if self.net.num_classes ==1:
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
@@ -198,7 +198,7 @@ class RLTeacherNaive(BaseCL):
                     labels = data['labels'].to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
-                    if self.net.num_labels ==1:
+                    if self.net.num_classes ==1:
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()
@@ -289,7 +289,7 @@ class RLTeacherWindow(BaseCL):
                 labels = data['labels'].to(self.device)
                 outputs = self.net(**inputs)[0]
                 references += labels.tolist()
-                if self.net.num_labels ==1:
+                if self.net.num_classes ==1:
                     predictions += outputs.squeeze()
                 else:
                     predictions += outputs.argmax(dim=1).tolist()
@@ -375,7 +375,7 @@ class RLTeacherSampling(BaseCL):
                     labels = data['labels'].to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
-                    if self.net.num_labels ==1:
+                    if self.net.num_classes ==1:
                         predictions += outputs.squeeze()
                     else:
                         predictions += outputs.argmax(dim=1).tolist()

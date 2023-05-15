@@ -3,7 +3,9 @@ from torch_geometric.datasets import TUDataset
 
 
 def get_tudataset_dataset(data_name, data_dir='data/tudataset'):
-    return TUDataset(root=data_dir, name=data_name)
+    dataset = TUDataset(root=data_dir, name=data_name)
+    dataset.__setattr__('name', data_name)
+    return dataset
 
 
 def split_dataset(dataset, split=[8, 1, 1]):

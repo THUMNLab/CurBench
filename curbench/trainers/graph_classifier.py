@@ -29,15 +29,14 @@ class GraphClassifier():
     def _init_dataloader(self, data_name):
         # standard:  'nci1'
         # noise:     'nci1-noise-0.4', 
-        # imbalance: 'nci1-imbalance-dominant-[0,1]-4-5-0.8', 'nci1-imbalance-exp-[0,1]-4-5-0.8'
         self.dataset, train_dataset, valid_dataset, test_dataset = get_dataset(data_name) # data format is a class: to shuffle and split
 
         self.train_loader = pyg.loader.DataLoader(
-            train_dataset, batch_size=50, shuffle=True, pin_memory=True)
+            train_dataset, batch_size=50, shuffle=True, pin_memory=True, num_workers=4)
         self.valid_loader = pyg.loader.DataLoader(
-            valid_dataset, batch_size=50, shuffle=False, pin_memory=True)
+            valid_dataset, batch_size=50, shuffle=False, pin_memory=True, num_workers=4)
         self.test_loader = pyg.loader.DataLoader(
-            test_dataset, batch_size=50, shuffle=False, pin_memory=True)
+            test_dataset, batch_size=50, shuffle=False, pin_memory=True, num_workers=4)
 
         self.data_prepare(self.train_loader)                            # curriculum part
 
@@ -95,7 +94,7 @@ class GraphClassifier():
                 total += data.num_graphs
 
             self.logger.info(
-                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
+                '[%3d]  Train Data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
@@ -104,7 +103,7 @@ class GraphClassifier():
                     best_acc = valid_acc
                     torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
-                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
+                    '[%3d]  Valid Data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
 
 

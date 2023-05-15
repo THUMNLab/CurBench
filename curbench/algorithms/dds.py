@@ -41,7 +41,7 @@ class DDS(BaseCL):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         
         self.scorer = copy.deepcopy(self.net)
-        self.fc = nn.Sequential(nn.Linear(self.net.num_labels, 1), nn.Sigmoid()).to(self.device)
+        self.fc = nn.Sequential(nn.Linear(self.net.num_classes, 1), nn.Sigmoid()).to(self.device)
         self.optimizer_s = copy.deepcopy(optimizer)
         self.optimizer_s.add_param_group({'params': self.scorer.parameters()})
         self.optimizer_s.add_param_group({'params': self.fc.parameters()})
