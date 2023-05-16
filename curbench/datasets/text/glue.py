@@ -61,6 +61,9 @@ def convert_dataset(data_name, tokenizer, dataset, max_length=128):
 def get_glue_dataset(data_name, tokenizer):
     raw_dataset = datasets.load_dataset('glue', data_name)
     raw_dataset.__setattr__('name', data_name)
-    raw_dataset.__setattr__('num_classes', raw_dataset['train'].features['label'].num_classes)
+    if data_name == 'stsb': 
+        raw_dataset.__setattr__('num_classes', 6)
+    else:
+        raw_dataset.__setattr__('num_classes', raw_dataset['train'].features['label'].num_classes)
     converted_dataset = convert_dataset(data_name, tokenizer, raw_dataset)
     return raw_dataset, converted_dataset

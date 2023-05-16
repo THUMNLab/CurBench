@@ -33,19 +33,19 @@ class TextClassifier():
         self.metric, self.metric_name = get_metric(data_name)
     
         self.train_loader = torch.utils.data.DataLoader(
-            dataset['train'], batch_size=50, shuffle=True, pin_memory=True, num_workers=4)
+            dataset['train'], batch_size=50, shuffle=True, pin_memory=True)
         if data_name == 'mnli':
             self.valid_loader = [torch.utils.data.DataLoader(
-                dataset[x], batch_size=50, pin_memory=True, num_workers=4) for x in ['validation_matched', 'validation_mismatched']]
+                dataset[x], batch_size=50, pin_memory=True) for x in ['validation_matched', 'validation_mismatched']]
             self.test_loader = [torch.utils.data.DataLoader(
-                dataset[x], batch_size=50, pin_memory=True, num_workers=4) for x in ['test_matched', 'test_mismatched']]
+                dataset[x], batch_size=50, pin_memory=True) for x in ['test_matched', 'test_mismatched']]
         else:
             self.valid_loader = [torch.utils.data.DataLoader(
-                dataset['validation'], batch_size=50, pin_memory=True, num_workers=4)]
+                dataset['validation'], batch_size=50, pin_memory=True)]
             self.test_loader = [torch.utils.data.DataLoader(
-                dataset['test'], batch_size=50, pin_memory=True, num_workers=4)]
+                dataset['test'], batch_size=50, pin_memory=True)]
 
-        self.data_prepare(self.train_loader, metric=self.metric, metric_name = self.metric_name)        # curriculum part
+        self.data_prepare(self.train_loader, metric=self.metric, metric_name=self.metric_name)        # curriculum part
 
 
     def _init_model(self, net_name, gpu_index, num_epochs):
@@ -55,6 +55,7 @@ class TextClassifier():
         self.net.to(self.device)
 
         self.epochs = num_epochs
+        self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
         if net_name in ['bert', 'gpt']:                                 # for pretrained bert, gpt
             self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=2e-5)
             self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
@@ -63,11 +64,6 @@ class TextClassifier():
             self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 self.optimizer, T_max=self.epochs, eta_min=1e-5)
 
-        if self.net.num_classes == 1: # data_name == 'stsb'
-            self.criterion = torch.nn.MSELoss(reduction='none')
-        else:
-            self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
 
@@ -75,11 +71,10 @@ class TextClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d-%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed,
-            time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
+        log_info = '%s-%s-%s-%d-%d%s' % (
+            algorithm_name, data_name, net_name, num_epochs, random_seed, '')
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
 
     def _train(self):
@@ -98,7 +93,7 @@ class TextClassifier():
             for data in tqdm(loader):
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                           if k not in ['labels', 'indices']}
-                labels = data['labels'].to(self.device)
+                labels = data['labels'].long().to(self.device)
                 indices = data['indices'].to(self.device)
 
                 self.optimizer.zero_grad()
@@ -111,10 +106,7 @@ class TextClassifier():
                 train_loss += loss.item() * len(labels)
                 total += len(labels)
                 references += labels.tolist()
-                if net.num_classes == 1:
-                    predictions += outputs.squeeze()
-                else:
-                    predictions += outputs.argmax(dim=1).tolist()
+                predictions += outputs.argmax(dim=1).tolist()
             
             self.lr_scheduler.step()
             train_metric = self.metric.compute(predictions=predictions, references=references)[self.metric_name]
@@ -138,16 +130,13 @@ class TextClassifier():
 
         self.net.eval()
         with torch.no_grad():
-            for data in loader:
+            for data in tqdm(loader):
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                           if k not in ['labels', 'indices']}
-                labels = data['labels'].to(self.device)
+                labels = data['labels'].long().to(self.device)
                 outputs = self.net(**inputs)[0]
                 references += labels.tolist()
-                if self.net.num_classes == 1:
-                    predictions += outputs.squeeze()
-                else:
-                    predictions += outputs.argmax(dim=1).tolist()
+                predictions += outputs.argmax(dim=1).tolist()
         return self.metric.compute(predictions=predictions, references=references)[self.metric_name]
 
 
@@ -158,8 +147,9 @@ class TextClassifier():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        valid_acc = self._valid(self.valid_loader)
-        self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_acc))
+        for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
+            valid_metric = self._valid(valid_loader)
+            self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
 
 
     def export(self, net_dir=None):

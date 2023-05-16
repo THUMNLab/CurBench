@@ -58,11 +58,10 @@ class GraphClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d-%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed,
-            time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
+        log_info = '%s-%s-%s-%d-%d' % (
+            algorithm_name, data_name, net_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
 
     def _train(self):
@@ -113,7 +112,7 @@ class GraphClassifier():
 
         self.net.eval()
         with torch.no_grad():
-            for data in loader:
+            for data in tqdm(loader):
                 inputs = data.to(self.device)
                 labels = data.y.to(self.device)
 

@@ -48,10 +48,9 @@ class NodeClassifier():
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
         log_info = '%s-%s-%s-%d-%d-%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed,
-            time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
+            algorithm_name, data_name, net_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
 
     def _train(self):
@@ -75,7 +74,7 @@ class NodeClassifier():
             total = masks.sum()
 
             self.logger.info(
-                '[%3d]  Train data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
+                '[%3d]  Train Data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss, time.time() - t))
             
             if (epoch + 1) % self.log_interval == 0:
@@ -84,7 +83,7 @@ class NodeClassifier():
                     best_acc = valid_acc
                     torch.save(self.net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
-                    '[%3d]  Valid data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
+                    '[%3d]  Valid Data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, self.data.val_mask.sum(), valid_acc, best_acc))
 
 
