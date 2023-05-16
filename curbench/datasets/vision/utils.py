@@ -32,17 +32,14 @@ class LabelImbalance(Dataset):
         where i is the class index, and n_i is the original number for class i
         '''
         self.dataset = dataset
-        label_lists = [[] for y in range(num_classes)]
-        for i, (_, y) in enumerate(self.dataset):
-            label_lists[y].append(i)
-
         self.indices = []
-        label_cnts = []
+        label_cnts = [0] * num_classes
+
         mu = (1.0 / imbalance_ratio) ** (1.0 / (num_classes - 1))
-        for y in range(num_classes):
-            label_cnt = int(len(label_lists[y]) * (mu ** y))
-            self.indices.extend(np.random.choice(label_lists[y], label_cnt, replace=False).tolist())
-            label_cnts.append(label_cnt)
+        for i, (_, y) in enumerate(self.dataset):
+            if np.random.rand() < (mu ** y):
+                label_cnts[y] += 1
+                self.indices.append(i)
         print('Imbalance label')
         print(np.array(label_cnts))
         
