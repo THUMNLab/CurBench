@@ -2,6 +2,7 @@ pillow
 transformers
 datasets
 evaluate
+einops
 
 torch
 torchvision

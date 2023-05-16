@@ -50,20 +50,8 @@ class ImageClassifier():
 
         self.epochs = num_epochs
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-        if net_name == 'lenet':
-            self.optimizer = torch.optim.AdamW(
-                self.net.parameters(), lr=0.001, weight_decay=0.01)
-            self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
-        elif net_name == 'resnet18':
-            self.optimizer = torch.optim.SGD(
-                self.net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-            self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR( 
-                self.optimizer, T_max=self.epochs, eta_min=1e-6)
-        elif net_name == 'vit':
-            self.optimizer = torch.optim.AdamW(
-                self.net.parameters(), lr=0.001, weight_decay=0.01)
-            self.lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
-                self.optimizer, max_lr=0.001, total_steps=len(self.train_loader)*self.epochs)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.0001)
+        self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
@@ -72,11 +60,10 @@ class ImageClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d-%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed,
-            time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()))
+        log_info = '%s-%s-%s-%d-%d' % (
+            algorithm_name, data_name, net_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), log_info)
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
         
 
     def _train(self):
@@ -129,7 +116,7 @@ class ImageClassifier():
 
         self.net.eval()
         with torch.no_grad():
-            for data in loader:
+            for data in tqdm(loader):
                 inputs = data[0].to(self.device)
                 labels = data[1].to(self.device)
 

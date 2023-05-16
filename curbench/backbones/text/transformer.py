@@ -2,7 +2,7 @@ from transformers import AutoConfig, AutoModelForSequenceClassification
 
 
 def get_transformer(net_name, num_embeddings, num_classes):
-    config = AutoConfig.from_pretrained(net_name, num_classes=num_classes)
+    config = AutoConfig.from_pretrained(net_name, num_labels=num_classes)
     net = AutoModelForSequenceClassification.from_pretrained(net_name, config=config)
     # net = AutoModelForSequenceClassification.from_config(config=config)
 
