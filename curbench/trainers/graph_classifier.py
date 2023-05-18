@@ -51,10 +51,15 @@ class GraphClassifier():
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
         self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
+        # self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        #         self.optimizer, T_max=self.epochs, eta_min=1e-5)
+        # self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=5, gamma=0.5)
+        # self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5, min_lr=1e-6)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
-    
+
+
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
@@ -92,6 +97,7 @@ class GraphClassifier():
                 correct += predicts.eq(labels).sum().item()
                 total += data.num_graphs
 
+            self.lr_scheduler.step()
             self.logger.info(
                 '[%3d]  Train Data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))

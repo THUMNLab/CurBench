@@ -12,7 +12,7 @@ name_trans = {
     'nci1':     'NCI1', 
     'proteins': 'PROTEINS', 
     'dd':       'DD', 
-    'ptc_mr':   'PTC_MR'
+    'ptc_mr':   'PTC_MR',
 }
 
 data_dict = {

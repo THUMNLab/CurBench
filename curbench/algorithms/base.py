@@ -118,15 +118,15 @@ class BaseTrainer():
         trainer_dict = {
             'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier, 'tinyimagenet': ImageClassifier,
 
-            'cola': TextClassifier, 'sst2': TextClassifier, 'mrpc': TextClassifier, 'qqp': TextClassifier, 'stsb': TextClassifier, 
-            'mnli': TextClassifier, 'qnli': TextClassifier, 'rte': TextClassifier, 'wnli': TextClassifier,
+            'rte': TextClassifier, 'mrpc': TextClassifier, 'stsb': TextClassifier, 'cola': TextClassifier, 
+            'sst2': TextClassifier, 'qnli': TextClassifier, 'qqp': TextClassifier, 'mnli': TextClassifier, 'wnli': TextClassifier,
 
             # TODO: Since the data format of node classification is a graph, which can not be loaded as a dataloader,
             # TODO: we may implement curriculum learning for it in the future.
             # 'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
 
-            'mutag': GraphClassifier, 'nci1': GraphClassifier, 'proteins': GraphClassifier, 
-            'dd': GraphClassifier, 'ptc_mr': GraphClassifier,
+            'mutag': GraphClassifier, 'ptc_mr': GraphClassifier, 'nci1': GraphClassifier, 
+            'proteins': GraphClassifier, 'dd': GraphClassifier, 
         }
         # allow data name format: [data]-[noise/imbalance]-[args]
         assert data_name.split('-')[0] in trainer_dict, \
