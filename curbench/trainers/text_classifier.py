@@ -34,7 +34,7 @@ class TextClassifier():
     
         self.train_loader = torch.utils.data.DataLoader(
             dataset['train'], batch_size=50, shuffle=True, pin_memory=True)
-        if data_name == 'mnli':
+        if 'mnli' in data_name:
             self.valid_loader = [torch.utils.data.DataLoader(
                 dataset[x], batch_size=50, pin_memory=True) for x in ['validation_matched', 'validation_mismatched']]
             self.test_loader = [torch.utils.data.DataLoader(
