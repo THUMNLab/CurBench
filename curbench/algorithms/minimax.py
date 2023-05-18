@@ -165,11 +165,11 @@ class Minimax(BaseCL):
     
 
     def _entropy(self, labels, base=None):
-        num_classes = len(labels)
+        num_labels = len(labels)
         value, count = np.unique(labels, return_counts=True)
-        prob = count / num_classes
+        prob = count / num_labels
         num_classes = np.count_nonzero(prob)
-        if num_classes <= 1 or num_classes <= 1:
+        if num_labels <= 1 or num_classes <= 1:
             return 1
         entro = 0
         if base == None:
