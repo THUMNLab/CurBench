@@ -28,8 +28,8 @@ class Superloss(BaseCL):
             self.tau = self.fac * origin_loss.mean() + (1.0 - self.fac) * self.tau
 
         beta = (origin_loss - self.tau) / self.lam
-        gamma = -2.0 / np.exp(1.0)
-        sigma = np.exp(-lambertw(0.5 * np.maximum(beta, gamma))).real
+        gamma = -2.0 / np.exp(1.0) + 1e-12
+        sigma = np.exp(-lambertw(0.5 * np.maximum(beta, gamma)).real)
         sigma = torch.from_numpy(sigma).to(self.device)
         super_loss = (loss - self.tau) * sigma + self.lam * (torch.log(sigma) ** 2)
         return torch.mean(super_loss)
