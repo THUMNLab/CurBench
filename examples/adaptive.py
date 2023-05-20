@@ -25,7 +25,8 @@ args = parser.parse_args()
 
 pretrainer = BaseTrainer(
     data_name=args.data,
-    net_name=args.teacher_net,
+    # net_name=args.teacher_net,
+    net_name=args.net,
     gpu_index=args.gpu,
     num_epochs=args.teacher_epochs,
     random_seed=args.seed,
