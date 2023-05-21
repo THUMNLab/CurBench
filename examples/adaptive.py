@@ -33,7 +33,7 @@ pretrainer = BaseTrainer(
 )
 # if args.teacher_dir is None:
 #     pretrainer.fit()
-args.teacher_dir = 'runs/base-%s-%s-%d-%d' % (args.data, args.net, args.epochs, args.seed)
+args.teacher_dir = 'runs/base-%s-%s-%d-%d' % (args.data, args.net, args.epochs, 42)
 pretrainer.evaluate(args.teacher_dir)
 teacher_net = pretrainer.export(args.teacher_dir)
 
