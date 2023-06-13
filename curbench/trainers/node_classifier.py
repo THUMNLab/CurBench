@@ -47,8 +47,8 @@ class NodeClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d-%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed)
+        log_info = 'node-%s-%s-%s-%d-%d-%s' % (
+            data_name, net_name, algorithm_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
@@ -107,7 +107,8 @@ class NodeClassifier():
         self._load_best_net(net_dir)
         valid_acc = self._valid(self.data.val_mask)
         test_acc = self._valid(self.data.test_mask)
-        self.logger.info('Best Valid Acc = %.4f and Final Test Acc = %.4f' % (valid_acc, test_acc))
+        self.logger.info('Valid Data = %7d  Best Valid Acc = %.4f' % (len(self.valid_loader.dataset), valid_acc))
+        self.logger.info('Test Data  = %7d  Final Test Acc = %.4f' % (len(self.test_loader.dataset), test_acc))
         return test_acc
 
 

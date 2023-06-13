@@ -71,8 +71,8 @@ class TextClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d%s' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed, '')
+        log_info = 'text-%s-%s-%s-%d-%d' % (
+            data_name, net_name, algorithm_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
@@ -149,7 +149,7 @@ class TextClassifier():
         self._load_best_net(net_dir)
         for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
             valid_metric = self._valid(valid_loader)
-            self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
+            self.logger.info('Valid Data = %7d  Best Valid %s = %.4f' % (len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric))
 
 
     def export(self, net_dir=None):
