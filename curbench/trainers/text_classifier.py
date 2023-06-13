@@ -111,7 +111,7 @@ class TextClassifier():
             self.lr_scheduler.step()
             train_metric = self.metric.compute(predictions=predictions, references=references)[self.metric_name]
             self.logger.info(
-                '[%3d]  Train Data = %7d  Train %s = %.4f  Loss = %.4f  Time = %.2fs'
+                '[%3d]  Train Data = %6d  Train %s = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, self.metric_name.capitalize(), train_metric, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
@@ -121,7 +121,7 @@ class TextClassifier():
                     torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 for valid_loader, valid_metric, best_metric in zip(self.valid_loader, valid_metrics, best_metrics):
                     self.logger.info(
-                        '[%3d]  Valid Data = %7d  Valid %s = %.4f  Best Valid %s = %.4f' 
+                        '[%3d]  Valid Data = %6d  Valid %s = %.4f  Best Valid %s = %.4f' 
                         % (epoch + 1, len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric, self.metric_name.capitalize(), best_metric))
             
 
@@ -149,7 +149,7 @@ class TextClassifier():
         self._load_best_net(net_dir)
         for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
             valid_metric = self._valid(valid_loader)
-            self.logger.info('Valid Data = %7d  Best Valid %s = %.4f' % (len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric))
+            self.logger.info('Valid Data = %6d  Best Valid %s = %.4f' % (len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric))
 
 
     def export(self, net_dir=None):
