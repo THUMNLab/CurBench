@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Subset
+from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
 from .utils import set_parameter

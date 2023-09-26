@@ -128,6 +128,7 @@ class BaseTrainer():
             'mutag': GraphClassifier, 'ptc_mr': GraphClassifier, 'nci1': GraphClassifier, 
             'proteins': GraphClassifier, 'dd': GraphClassifier, 
         }
+
         # allow data name format: [data]-[noise/imbalance]-[args]
         assert data_name.split('-')[0] in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
@@ -137,6 +138,11 @@ class BaseTrainer():
             cl.name, cl.data_prepare, cl.model_prepare,
             cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum,
         )
+
+        # only allow cbs, coarse_to_fine, local_to_global for image classifier
+        assert isinstance(self.trainer, ImageClassifier) \
+            or not (isinstance(cl, CBS) or isinstance(cl, LocalToGlobal) or isinstance(cl, CoarseToFine)), \
+            'Assert Error: cbs or local_to_global or coarse_to_fine cannot be applied to text or graph'
         
 
     def fit(self):

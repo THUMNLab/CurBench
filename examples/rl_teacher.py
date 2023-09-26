@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='cifar10')
 parser.add_argument('--net', type=str, default='lenet')
 parser.add_argument('--gpu', type=int, default=0)
-parser.add_argument('--epochs', type=int, default=2000)
+parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--policy', type=str, default='online',
                     help='online, naive, window, sampling')
