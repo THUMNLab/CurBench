@@ -38,23 +38,23 @@ class SelfPaced(BaseCL):
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        if self.teacher_net is None:                # In Self-Paced Learning, the network is itself.
-            self.teacher_net = net                  # In Transfer Teacher, the network is teacher net.
+        if self.teacher_net is None:                        # In Self-Paced Learning, the network is itself.
+            self.teacher_net = net                          # In Transfer Teacher, the network is teacher net.
 
 
     def data_curriculum(self, **kwargs):
         self.epoch += 1
 
-        data_rate = min(1.0, self._subset_grow())   # Current proportion of sampled data.
-        data_size = int(self.data_size * data_rate) # Current number of sampled data.
-        data_loss = self._loss_measure()            # Calculate loss as the measurement of difficulty. 
+        data_rate = min(1.0, self._subset_grow())           # Current proportion of sampled data.
+        data_size = max(1, int(self.data_size * data_rate)) # Current number of sampled data.
+        data_loss = self._loss_measure()                    # Calculate loss as the measurement of difficulty. 
         loss_topk = data_loss.topk(k=data_size, largest=False, sorted=False)
-        data_indices = loss_topk.indices.tolist()   # Sample the easist data according to the loss value.
-        loss_threshold = loss_topk.values.max()     # Derive the loss of the hardest data instance.
+        data_indices = loss_topk.indices.tolist()           # Sample the easist data according to the loss value.
+        loss_threshold = loss_topk.values.max()             # Derive the loss of the hardest data instance.
 
-        if self.weight_fn == 'hard':                # Data Sampling (hard selection).
+        if self.weight_fn == 'hard':                        # Data Sampling (hard selection).
             dataset = Subset(self.dataset, data_indices)
-        else:                                       # Data Reweighting (soft selection).
+        else:                                               # Data Reweighting (soft selection).
             dataset = self.dataset
             self.weights = self._data_weight(data_loss, loss_threshold)
         return self._dataloader(dataset)
@@ -68,12 +68,12 @@ class SelfPaced(BaseCL):
 
 
     def _subset_grow(self):
-        if self.grow_fn == 'linear':                # Linear Function.
+        if self.grow_fn == 'linear':                        # Linear Function.
             return self.start_rate + (1.0 - self.start_rate) / self.grow_epochs * self.epoch
-        elif self.grow_fn == 'geom':                # Geometric Function.
+        elif self.grow_fn == 'geom':                        # Geometric Function.
             return 2.0 ** ((math.log2(1.0) - math.log2(self.start_rate)) / self.grow_epochs * self.epoch + math.log2(self.start_rate))
         elif self.grow_fn[:5] == 'root-' and self.grow_fn[5:].isnumeric():
-            p = int(self.grow_fn[5:])               # Root-p Function.
+            p = int(self.grow_fn[5:])                       # Root-p Function.
             return (self.start_rate ** p + (1.0 - self.start_rate ** p) / self.grow_epochs * self.epoch) ** 0.5
         else:
             raise NotImplementedError()
@@ -84,16 +84,16 @@ class SelfPaced(BaseCL):
         self.teacher_net.eval()
         with torch.no_grad():
             for data in self._dataloader(self.dataset, shuffle=False):
-                if isinstance(data, list):          # data from torch.utils.data.Dataset
+                if isinstance(data, list):                  # data from torch.utils.data.Dataset
                     inputs = data[0].to(self.device)
                     labels = data[1].to(self.device)
                     outputs = self.teacher_net(inputs)
-                elif isinstance(data, dict):        # data from datasets.arrow_dataset.Dataset
+                elif isinstance(data, dict):                # data from datasets.arrow_dataset.Dataset
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
                     labels = data['labels'].to(self.device)
                     outputs = self.teacher_net(**inputs)[0]
-                elif isinstance(data, pygBatch):    # data from torch_geometric.datasets
+                elif isinstance(data, pygBatch):            # data from torch_geometric.datasets
                     inputs = data.to(self.device)
                     labels = data.y.to(self.device)
                     outputs = self.teacher_net(inputs)
@@ -104,7 +104,7 @@ class SelfPaced(BaseCL):
 
 
     def _data_weight(self, loss, threshold):
-        mask = loss < threshold                     # The weight of data whose loss greater than threshold is zero.
+        mask = loss < threshold                             # The weight of data whose loss greater than threshold is zero.
         if self.weight_fn == 'linear':
             return mask * (1.0 - loss / threshold)
         elif self.weight_fn == 'logarithmic':
