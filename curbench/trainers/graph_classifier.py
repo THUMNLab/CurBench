@@ -51,10 +51,6 @@ class GraphClassifier():
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
         self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
-        # self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        #         self.optimizer, T_max=self.epochs, eta_min=1e-5)
-        # self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=5, gamma=0.5)
-        # self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5, min_lr=1e-6)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part
             self.criterion, self.optimizer, self.lr_scheduler)
@@ -63,8 +59,8 @@ class GraphClassifier():
     def _init_logger(self, algorithm_name, data_name, 
                      net_name, num_epochs, random_seed):
         self.log_interval = 1
-        log_info = '%s-%s-%s-%d-%d' % (
-            algorithm_name, data_name, net_name, num_epochs, random_seed)
+        log_info = 'graph-%s-%s-%s-%d-%d' % (
+            data_name, net_name, algorithm_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
         self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
 
@@ -99,7 +95,7 @@ class GraphClassifier():
 
             self.lr_scheduler.step()
             self.logger.info(
-                '[%3d]  Train Data = %7d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
+                '[%3d]  Train Data = %6d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
                 % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
@@ -108,7 +104,7 @@ class GraphClassifier():
                     best_acc = valid_acc
                     torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
-                    '[%3d]  Valid Data = %7d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
+                    '[%3d]  Valid Data = %6d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
                     % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
 
 
@@ -138,7 +134,8 @@ class GraphClassifier():
         self._load_best_net(net_dir)
         valid_acc = self._valid(self.valid_loader)
         test_acc = self._valid(self.test_loader)
-        self.logger.info('Best Valid Acc = %.4f and Final Test Acc = %.4f' % (valid_acc, test_acc))
+        self.logger.info('Valid Data = %6d  Best Valid Acc = %.4f' % (len(self.valid_loader.dataset), valid_acc))
+        self.logger.info('Test Data  = %6d  Final Test Acc = %.4f' % (len(self.test_loader.dataset), test_acc))
         return test_acc
 
 
