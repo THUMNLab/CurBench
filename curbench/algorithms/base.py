@@ -130,19 +130,20 @@ class BaseTrainer():
         }
 
         # allow data name format: [data]-[noise/imbalance]-[args]
-        assert data_name.split('-')[0] in trainer_dict, \
+        dataset_name = data_name.split('-')[0]
+        assert dataset_name in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
 
-        self.trainer = trainer_dict[data_name.split('-')[0]](
+        # only allow cbs, coarse_to_fine, local_to_global for image classifier
+        assert not (cl.name == 'cbs' or cl.name == 'local_to_global' or cl.name == 'coarse_to_fine') \
+            or isinstance(trainer_dict[dataset_name], ImageClassifier), \
+            'Assert Error: cbs or local_to_global or coarse_to_fine cannot be applied to text or graph'
+
+        self.trainer = trainer_dict[dataset_name](
             data_name, net_name, gpu_index, num_epochs, random_seed,
             cl.name, cl.data_prepare, cl.model_prepare,
             cl.data_curriculum, cl.model_curriculum, cl.loss_curriculum,
         )
-
-        # only allow cbs, coarse_to_fine, local_to_global for image classifier
-        assert isinstance(self.trainer, ImageClassifier) \
-            or not (isinstance(cl, CBS) or isinstance(cl, LocalToGlobal) or isinstance(cl, CoarseToFine)), \
-            'Assert Error: cbs or local_to_global or coarse_to_fine cannot be applied to text or graph'
         
 
     def fit(self):

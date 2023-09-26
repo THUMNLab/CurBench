@@ -149,8 +149,7 @@ class TextClassifier():
         self._load_best_net(net_dir)
         for valid_loader, test_loader in zip(self.valid_loader, self.test_loader):
             valid_metric = self._valid(valid_loader)
-            self.logger.info('Valid Data = %6d' % len(valid_loader.dataset))
-            self.logger.info('Best Valid %s = %.4f' % (self.metric_name.capitalize(), valid_metric))
+            self.logger.info('Valid Data = %6d  Final Valid %s = %.4f' % (len(valid_loader.dataset), self.metric_name.capitalize(), valid_metric))
 
 
     def export(self, net_dir=None):
