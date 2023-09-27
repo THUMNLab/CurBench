@@ -14,7 +14,7 @@ pattern = re.compile(r"^([\w]+)-([\w]+)-(noise-0\.4-|imbalance-50-)?([\w]+)-([\d
 print(len(os.listdir(runs_folder)))
 # 遍历文件夹
 for folder_name in os.listdir(runs_folder):
-    print(folder_name)
+    # print(folder_name)
     match = pattern.match(folder_name)
     # 检查文件夹名是否符合规则
     if not match:
@@ -46,7 +46,7 @@ for folder_name in os.listdir(runs_folder):
     
     # 排除epoch异常的测试实验
     if mapping[backbone] != epoch:
-        print("Wrong epoch setting")
+        print("Wrong epoch setting: %s" % (folder_name))
         continue
     
     # mnli有两个验证集，暂时不看
@@ -54,14 +54,14 @@ for folder_name in os.listdir(runs_folder):
         print("Mnli")
         continue
 
-    print(log_file_path)
+    # print(log_file_path)
     # 读取log文件中的指标
     log_pattern = re.compile(r".*?Final.*=\s*([\d.]+)")
     with open(log_file_path, "r") as file:
         for line in file:
             pattern_match = log_pattern.search(line)
             if pattern_match:
-                print(line.strip())
+                # print(line.strip())
                 metric = float(pattern_match.group(1))
                 # config = (setting, dataset, backbone, method, seed)
                 # results[config] = metric
@@ -74,22 +74,24 @@ for folder_name in os.listdir(runs_folder):
                 break  # 找到第一个匹配的行后，停止读取文件
 
 # 打印结果
-for config, metric in results.items():
-    print(f"Configuration: {config}, Metric: {metric}")
+# for config, metric in results.items():
+#     print(f"Configuration: {config}, Metric: {metric}")
 
 # for setting in ["standard"]:
 #     for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
-#         for backbone in ["lenet", "resnet18", "vit"]:
+#         # for backbone in ["lenet", "resnet18", "vit"]:
+#         for backbone in ["lenet"]:
 #             config = (setting, dataset, backbone)
 #             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
 
 # for setting in ["standard"]:
 #     for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli", "wnli"]:
-#         for backbone in ["lstm", "bert", "gpt"]:
+#         # for backbone in ["lstm", "bert", "gpt"]:
+#         for backbone in ["lstm"]:
 #             config = (setting, dataset, backbone)
 #             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
 
-for setting in ["standard"]:
+for setting in ["noise"]:
     for dataset in ["mutag", "ptc_mr", "nci1", "proteins", "dd"]:
         for backbone in ["gcn", "gat", "sage"]:
             config = (setting, dataset, backbone)

@@ -10,18 +10,15 @@ parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--cluster_K', type=int, default=3)
-parser.add_argument('--teacher_epochs', type=int, default=200)
-parser.add_argument('--teacher_net', type=str, default='lenet')
 parser.add_argument('--teacher_dir', type=str, default=None)
 args = parser.parse_args()
 
 
 pretrainer = BaseTrainer(
     data_name=args.data,
-    # net_name=args.teacher_net,
     net_name=args.net,
     gpu_index=args.gpu,
-    num_epochs=args.teacher_epochs,
+    num_epochs=args.epochs,
     random_seed=args.seed,
 )
 # if args.teacher_dir is None:

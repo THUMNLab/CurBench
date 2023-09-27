@@ -90,11 +90,12 @@ class MetaReweight(BaseCL):
         meta_loss = self.criterion(meta_outputs, meta_labels)
         grad_eps = torch.autograd.grad(torch.mean(meta_loss), eps)[0]
 
+        assert not grad_eps.requires_grad
         w_tilde = torch.clamp(-grad_eps, min=0.0)
         norm_c = torch.sum(w_tilde) + 1e-12
         weights = w_tilde / norm_c
         loss = self.criterion(outputs, labels)
-        return torch.mean(loss * weights.detach())
+        return torch.mean(loss * weights)
 
 
 class MetaReweightTrainer(BaseTrainer):
