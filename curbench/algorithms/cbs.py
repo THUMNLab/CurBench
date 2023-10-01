@@ -22,13 +22,19 @@ class CBS(BaseCL):
         self.std = start_std
         self.grow_factor = grow_factor
         self.grow_interval = grow_interval
-        
+
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
-        for name, module in list(self.net.named_modules()):
+        self.replace_conv2d(self.net)
+    
+
+    def replace_conv2d(self, model):
+        for name, module in model.named_children():
             if isinstance(module, nn.Conv2d):
-                self.net._modules[name] = KernelConv2d(module, self.kernel_size, self.std)
+                setattr(model, name, KernelConv2d(module, self.kernel_size, self.std).to(self.device))
+            else:
+                self.replace_conv2d(module)
 
 
     def model_curriculum(self, **kwargs):
