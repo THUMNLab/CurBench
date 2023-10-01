@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -40,7 +41,7 @@ class LocalToGlobal(BaseCL):
         self.epoch += 1
 
         class_rate = min(1.0, self._subclass_grow())
-        class_size = int(np.ceil(self.class_size * class_rate))
+        class_size = int(math.ceil(self.class_size * class_rate))
         print(class_size)
         if self.classes.shape[0] < class_size:
             if self.classes.shape[0] == 0:

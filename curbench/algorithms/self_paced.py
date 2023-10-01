@@ -46,7 +46,7 @@ class SelfPaced(BaseCL):
         self.epoch += 1
 
         data_rate = min(1.0, self._subset_grow())               # Current proportion of sampled data.
-        data_size = int(np.ceil(self.data_size * data_rate))    # Current number of sampled data.
+        data_size = int(math.ceil(self.data_size * data_rate))  # Current number of sampled data.
         data_loss = self._loss_measure()                        # Calculate loss as the measurement of difficulty. 
         loss_topk = data_loss.topk(k=data_size, largest=False, sorted=False)
         data_indices = loss_topk.indices.tolist()               # Sample the easist data according to the loss value.
