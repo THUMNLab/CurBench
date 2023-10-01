@@ -12,15 +12,15 @@ class LocalToGlobal(BaseCL):
     
     Local to global learning: Gradually adding classes for training deep neural networks. http://openaccess.thecvf.com/content_CVPR_2019/papers/Cheng_Local_to_Global_Learning_Gradually_Adding_Classes_for_Training_Deep_CVPR_2019_paper.pdf
     """
-    def __init__(self, start_size, grow_size, grow_interval, strategy):
+    def __init__(self, start_rate, grow_rate, grow_interval, strategy):
         super(LocalToGlobal, self).__init__()
 
         self.name = 'local_to_global'
         self.epoch = 0
         self.classes = np.array([], dtype=int)
 
-        self.start_size = start_size
-        self.grow_size = grow_size
+        self.start_rate = start_rate
+        self.grow_rate = grow_rate
         self.grow_interval = grow_interval
         self.strategy = strategy
 
@@ -39,7 +39,9 @@ class LocalToGlobal(BaseCL):
     def data_curriculum(self, **kwargs):
         self.epoch += 1
 
-        class_size = min(self.class_size, self._subclass_grow())
+        class_rate = min(1.0, self._subclass_grow())
+        class_size = int(np.ceil(self.class_size * class_rate))
+        print(class_size)
         if self.classes.shape[0] < class_size:
             if self.classes.shape[0] == 0:
                 classes_select = np.random.choice(
@@ -84,7 +86,7 @@ class LocalToGlobal(BaseCL):
 
     
     def _subclass_grow(self):
-        return self.start_size + self.grow_size * ((self.epoch - 1) // self.grow_interval + 1)
+        return self.start_rate + self.grow_rate * ((self.epoch - 1) // self.grow_interval + 1)
 
 
     def _similarity_measure(self, label):
@@ -106,9 +108,9 @@ class LocalToGlobal(BaseCL):
 
 class LocalToGlobalTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
-                 start_size, grow_size, grow_interval, strategy):
+                 start_rate, grow_rate, grow_interval, strategy):
         
-        cl = LocalToGlobal(start_size, grow_size, grow_interval, strategy)
+        cl = LocalToGlobal(start_rate, grow_rate, grow_interval, strategy)
 
         super(LocalToGlobalTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)
