@@ -42,7 +42,6 @@ class LocalToGlobal(BaseCL):
 
         class_rate = min(1.0, self._subclass_grow())
         class_size = int(math.ceil(self.class_size * class_rate))
-        print(class_size)
         if self.classes.shape[0] < class_size:
             if self.classes.shape[0] == 0:
                 classes_select = np.random.choice(

@@ -156,8 +156,6 @@ class CoarseToFine(BaseCL):
 
         self._scheduler()
 
-        # print("classify = ", classify)
-        # print("curriculum schedule = ", self.schedule)
 
     def _scheduler(self):
         self.schedule = np.array([0])
