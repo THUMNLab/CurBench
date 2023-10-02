@@ -109,7 +109,7 @@ class RLTeacherOnline(BaseCL):
                 elif isinstance(data, dict):  # text classifier
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
                     if self.net.num_classes ==1:
@@ -195,7 +195,7 @@ class RLTeacherNaive(BaseCL):
                 elif isinstance(data, dict):  # text classifier
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
                     if self.net.num_classes ==1:
@@ -286,7 +286,7 @@ class RLTeacherWindow(BaseCL):
             elif isinstance(data, dict):  # text classifier
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                labels = data['labels'].to(self.device)
+                labels = data['labels'].long().to(self.device)
                 outputs = self.net(**inputs)[0]
                 references += labels.tolist()
                 if self.net.num_classes ==1:
@@ -372,7 +372,7 @@ class RLTeacherSampling(BaseCL):
                 elif isinstance(data, dict):  # text classifier
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.net(**inputs)[0]
                     references += labels.tolist()
                     if self.net.num_classes ==1:

@@ -91,7 +91,7 @@ class SelfPaced(BaseCL):
                 elif isinstance(data, dict):                    # data from datasets.arrow_dataset.Dataset
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.teacher_net(**inputs)[0]
                 elif isinstance(data, pygBatch):                # data from torch_geometric.datasets
                     inputs = data.to(self.device)
