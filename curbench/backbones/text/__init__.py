@@ -32,7 +32,9 @@ def get_tokenizer(net_name):
         'Assert Error: net_name should be in ' + str(list(tokenizer_dict.keys()))
 
     tokenizer_name = tokenizer_dict[net_name]
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+    # Connect Error: huggingface.co
+    # tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+    tokenizer = AutoTokenizer.from_pretrained('net/%s' % tokenizer_name)
     if 'gpt' in tokenizer_name:     # for gpt
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     return tokenizer

@@ -74,9 +74,58 @@ def get_dataset(data_name, tokenizer):
     return raw_dataset, converted_dataset
 
 
+# Connect Error: huggingface.co
+import numpy as np
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import f1_score, matthews_corrcoef
+
+def simple_accuracy(preds, labels):
+    return float((preds == labels).mean())
+
+def acc_and_f1(preds, labels):
+    acc = simple_accuracy(preds, labels)
+    f1 = float(f1_score(y_true=labels, y_pred=preds))
+    return {
+        "accuracy": acc,
+        "f1": f1,
+    }
+
+def pearson_and_spearman(preds, labels):
+    pearson_corr = float(pearsonr(preds, labels)[0])
+    spearman_corr = float(spearmanr(preds, labels)[0])
+    return {
+        "pearson": pearson_corr,
+        "spearmanr": spearman_corr,
+    }
+
+class GLUEMetric():
+    def __init__(self, config_name):
+        self.config_name = config_name
+
+    def compute(self, predictions, references):
+        predictions = np.array(predictions, dtype='int64' if self.config_name != 'stsb' else 'float32')
+        references = np.array(references, dtype='int64' if self.config_name != 'stsb' else 'float32')
+
+        if self.config_name == "cola":
+            return {"matthews_correlation": matthews_corrcoef(references, predictions)}
+        elif self.config_name == "stsb":
+            return pearson_and_spearman(predictions, references)
+        elif self.config_name in ["mrpc", "qqp"]:
+            return acc_and_f1(predictions, references)
+        elif self.config_name in ["sst2", "mnli", "mnli_mismatched", "mnli_matched", "qnli", "rte", "wnli", "hans"]:
+            return {"accuracy": simple_accuracy(predictions, references)}
+        else:
+            raise KeyError(
+                "You should supply a configuration name selected in "
+                '["sst2", "mnli", "mnli_mismatched", "mnli_matched", '
+                '"cola", "stsb", "mrpc", "qqp", "qnli", "rte", "wnli", "hans"]'
+            )
+
 def get_metric(data_name):
     # allow data name format: [data]-[noise/imbalance]-[args]
     data_name = data_name.split('-')[0]
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    return evaluate.load('glue', data_name), data_dict[data_name]
+    # Connect Error: huggingface.co
+    # return evaluate.load('glue', data_name), data_dict[data_name]
+    return GLUEMetric(data_name), data_dict[data_name]
