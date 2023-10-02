@@ -11,7 +11,7 @@ results = {}
 
 # 定义正则表达式模式，匹配文件夹名
 pattern = re.compile(r"^([\w]+)-([\w]+)-(noise-0\.4-|imbalance-50-)?([\w]+)-([\d]+)-([\d]+)$")
-print(len(os.listdir(runs_folder)))
+# print(len(os.listdir(runs_folder)))
 # 遍历文件夹
 for folder_name in os.listdir(runs_folder):
     # print(folder_name)
@@ -41,7 +41,7 @@ for folder_name in os.listdir(runs_folder):
     log_file_path = os.path.join(folder_path, "train.log")
     # 检查log文件是否存在
     if not os.path.exists(log_file_path):
-        print("No log file")
+        # print("No log file")
         continue
     
     # 排除epoch异常的测试实验
@@ -77,17 +77,17 @@ for folder_name in os.listdir(runs_folder):
 # for config, metric in results.items():
 #     print(f"Configuration: {config}, Metric: {metric}")
 
-for setting in ["noise"]:
-    for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
-        for backbone in ["lenet", "resnet18", "vit"]:
-            config = (setting, dataset, backbone)
-            for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
-
 # for setting in ["noise"]:
-#     for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp"]: # "mnli", "wnli"
-#         for backbone in ["lstm", "bert", "gpt"]:
+#     for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
+#         for backbone in ["lenet", "resnet18", "vit"]:
 #             config = (setting, dataset, backbone)
-#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
+#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
+
+for setting in ["standard"]:
+    for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp"]: # "mnli", "wnli"
+        for backbone in ["lstm", "bert", "gpt"]:
+            config = (setting, dataset, backbone)
+            for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
 
 # for setting in ["noise"]:
 #     for dataset in ["mutag", "ptc_mr", "nci1", "proteins", "dd"]:

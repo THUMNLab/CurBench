@@ -29,7 +29,7 @@ import re
 
 # 删除没有结果的train.log文件
 pattern = re.compile(r".*?Final.*=\s*([\d.]+)")
-for root in ['runs', 'runs_']:
+for root in ['runs']:
     dirs = os.listdir(root)
     for dir in dirs:
         path = os.path.join(root, dir, 'train.log')
@@ -48,14 +48,14 @@ for root in ['runs', 'runs_']:
                     os.remove(path)
 
 # 删除没有train.log的文件夹
-for root in ['runs', 'runs_']:
-    dirs = os.listdir(root)
-    for dir in dirs:
-        path = os.path.join(root, dir)
-        if 'train.log' not in os.listdir(path):
-            if 'net.pkl' in os.listdir(path):
-                os.remove(os.path.join(path, 'net.pkl'))
-            os.rmdir(path)
+# for root in ['runs', 'runs_']:
+#     dirs = os.listdir(root)
+#     for dir in dirs:
+#         path = os.path.join(root, dir)
+#         if 'train.log' not in os.listdir(path):
+#             if 'net.pkl' in os.listdir(path):
+#                 os.remove(os.path.join(path, 'net.pkl'))
+#             os.rmdir(path)
 
 # 统计文件夹数量
 for root in ['runs', 'runs_']:

@@ -43,7 +43,6 @@ class Adaptive(BaseCL):
             self.difficulty = torch.Tensor().to(self.device)
             self.pretrained_output = torch.Tensor().to(self.device)
             self.data_indice = torch.arange(self.data_size)
-            self.crossEntrophy = torch.nn.CrossEntropyLoss(reduction='none')
             self.KLloss = torch.nn.KLDivLoss(reduction='batchmean')
             self._set_initial_difficulty()
             self.pretrained_difficulty = self.difficulty
@@ -105,7 +104,7 @@ class Adaptive(BaseCL):
                 else:
                     raise NotImplementedError()
                 self.pretrained_output = torch.cat((self.pretrained_output, outputs), 0)
-                loss = self.crossEntrophy(outputs, labels)
+                loss = self.criterion(outputs, labels)
                 self.difficulty = torch.cat((self.difficulty, loss), 0)
 
 
@@ -130,7 +129,7 @@ class Adaptive(BaseCL):
                     outputs = self.pretrained_model(inputs)
                 else:
                     raise NotImplementedError()
-                loss = self.crossEntrophy(outputs, labels).detach()
+                loss = self.criterion(outputs, labels).detach()
             
             current_difficulty = torch.cat((current_difficulty, loss), 0)
         
