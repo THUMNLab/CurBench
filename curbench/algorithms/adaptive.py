@@ -95,7 +95,7 @@ class Adaptive(BaseCL):
                 elif isinstance(data, dict):
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                                 if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.pretrained_model(**inputs)[0]
                 elif isinstance(data, pygBatch):
                     inputs = data.to(self.device)
@@ -121,7 +121,7 @@ class Adaptive(BaseCL):
                 elif isinstance(data, dict):
                     inputs = {k: v.to(self.device) for k, v in data.items() 
                               if k not in ['labels', 'indices']}
-                    labels = data['labels'].to(self.device)
+                    labels = data['labels'].long().to(self.device)
                     outputs = self.pretrained_model(**inputs)[0]
                 elif isinstance(data, pygBatch):
                     inputs = data.to(self.device)

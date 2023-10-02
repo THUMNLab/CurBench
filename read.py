@@ -51,7 +51,25 @@ for folder_name in os.listdir(runs_folder):
     
     # mnli有两个验证集，暂时不看
     if dataset == "mnli":
-        # print("Mnli")
+        # 读取log文件中的指标
+        log_pattern = re.compile(r".*?Final.*=\s*([\d.]+)")
+        with open(log_file_path, "r") as file:
+            count = 0
+            for line in file:
+                pattern_match = log_pattern.search(line)
+                if pattern_match:
+                    count += 1
+                    if count == 1:
+                        config = (setting, "mnli-matched", backbone)
+                    elif count == 2:
+                        config = (setting, "mnli-mismatched", backbone)
+                    if config not in results:
+                        results[config] = {}
+                    if method not in results[config]:
+                        results[config][method] = {}
+                    results[config][method][seed] = float(pattern_match.group(1))
+                    if count >= 2:
+                        break  # 找到两个匹配的行后，停止读取文件
         continue
 
     # print(log_file_path)
@@ -77,19 +95,19 @@ for folder_name in os.listdir(runs_folder):
 # for config, metric in results.items():
 #     print(f"Configuration: {config}, Metric: {metric}")
 
-# for setting in ["noise"]:
+# for setting in ["standard"]:
 #     for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
 #         for backbone in ["lenet", "resnet18", "vit"]:
 #             config = (setting, dataset, backbone)
 #             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
 
 for setting in ["standard"]:
-    for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp"]: # "mnli", "wnli"
+    for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli-matched", "mnli-mismatched"]:
         for backbone in ["lstm", "bert", "gpt"]:
             config = (setting, dataset, backbone)
             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
 
-# for setting in ["noise"]:
+# for setting in ["standard"]:
 #     for dataset in ["mutag", "ptc_mr", "nci1", "proteins", "dd"]:
 #         for backbone in ["gcn", "gat", "sage"]:
 #             config = (setting, dataset, backbone)
