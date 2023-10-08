@@ -95,17 +95,17 @@ for folder_name in os.listdir(runs_folder):
 # for config, metric in results.items():
 #     print(f"Configuration: {config}, Metric: {metric}")
 
-# for setting in ["standard"]:
-#     for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
-#         for backbone in ["lenet", "resnet18", "vit"]:
-#             config = (setting, dataset, backbone)
-#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
-
 for setting in ["standard"]:
-    for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli-matched", "mnli-mismatched"]:
-        for backbone in ["lstm", "bert", "gpt"]:
+    for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
+        for backbone in ["lenet", "resnet18", "vit"]:
             config = (setting, dataset, backbone)
-            for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
+            for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
+
+# for setting in ["standard"]:
+#     for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli-matched", "mnli-mismatched"]:
+#         for backbone in ["lstm", "bert", "gpt"]:
+#             config = (setting, dataset, backbone)
+#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
 
 # for setting in ["standard"]:
 #     for dataset in ["mutag", "ptc_mr", "nci1", "proteins", "dd"]:
