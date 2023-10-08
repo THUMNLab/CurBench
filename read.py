@@ -5,13 +5,22 @@ import re
 runs_folder = "runs"
 
 mapping = {"bert": "3", "gpt": "3", "lstm": "10", "vit": "200", "resnet18": "200", "lenet": "200", "gcn": "200", "gat": "200", "sage": "200"}
+backbone2type = {"lenet": "image", "resnet18": "image", "vit": "image", "lstm": "text", "bert": "text", "gpt": "text", "gcn": "graph", "gat": "graph", "sage": "graph"}
+target_datasets = {"image": ["cifar10", "cifar100", "tinyimagenet"], "text": ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli-matched", "mnli-mismatched"], "graph": ["mutag", "ptc_mr", "nci1", "proteins", "dd"]}
+target_backbones = {"image": ["lenet", "resnet18", "vit"], "text": ["lstm", "bert", "gpt"], "graph": ["gcn", "gat", "sage"]}
+target_methods = {"image": ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"],
+                "text":  ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"],
+                "graph": ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]}
 
 # 初始化存储结果的字典
 results = {}
 
 # 定义正则表达式模式，匹配文件夹名
 pattern = re.compile(r"^([\w]+)-([\w]+)-(noise-0\.4-|imbalance-50-)?([\w]+)-([\d]+)-([\d]+)$")
-# print(len(os.listdir(runs_folder)))
+
+target_type = "image"
+target_setting = "noise"
+
 # 遍历文件夹
 for folder_name in os.listdir(runs_folder):
     # print(folder_name)
@@ -37,7 +46,15 @@ for folder_name in os.listdir(runs_folder):
     backbone = parts[-3]
     epoch = parts[-2]
     seed = parts[-1]
+    cur_type = backbone2type[backbone]
+
+    # 仅保留当前表格需要的文件进行读取
+    if cur_type != target_type or setting != target_setting:
+        print("Exclude " + folder_name)
+        continue
     
+    print("Include " + folder_name)
+
     log_file_path = os.path.join(folder_path, "train.log")
     # 检查log文件是否存在
     if not os.path.exists(log_file_path):
@@ -49,7 +66,7 @@ for folder_name in os.listdir(runs_folder):
         print("Wrong epoch setting: %s" % (folder_name))
         continue
     
-    # mnli有两个验证集，暂时不看
+    # mnli有两个验证集，单独处理
     if dataset == "mnli":
         # 读取log文件中的指标
         log_pattern = re.compile(r".*?Final.*=\s*([\d.]+)")
@@ -95,30 +112,16 @@ for folder_name in os.listdir(runs_folder):
 # for config, metric in results.items():
 #     print(f"Configuration: {config}, Metric: {metric}")
 
-for setting in ["standard"]:
-    for dataset in ["cifar10", "cifar100", "tinyimagenet"]:
-        for backbone in ["lenet", "resnet18", "vit"]:
-            config = (setting, dataset, backbone)
-            for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "local_to_global", "dds", "dihcl", "superloss", "cbs", "coarse_to_fine", "adaptive"]:
-
-# for setting in ["standard"]:
-#     for dataset in ["rte", "mrpc", "stsb", "cola", "sst2", "qnli", "qqp", "mnli-matched", "mnli-mismatched"]:
-#         for backbone in ["lstm", "bert", "gpt"]:
-#             config = (setting, dataset, backbone)
-#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
-
-# for setting in ["standard"]:
-#     for dataset in ["mutag", "ptc_mr", "nci1", "proteins", "dd"]:
-#         for backbone in ["gcn", "gat", "sage"]:
-#             config = (setting, dataset, backbone)
-#             for method in ["base", "self_paced", "transfer_teacher", "minimax", "screener_net", "meta_reweight", "meta_weight_net", "data_parameters", "dds", "dihcl", "superloss", "adaptive"]:
-
-                if config in results.keys() and method in results[config]:
-                    for seed in ["42", "666", "777", "888", "999"]:
-                        if seed in results[config][method]:
-                            print(results[config][method][seed], end="")
-                        if seed != "999":
-                            print(",", end="")
-                    print()
-                else:
-                    print(",,,,")
+for dataset in target_datasets[target_type]:
+    for backbone in target_backbones[target_type]:
+        config = (target_setting, dataset, backbone)
+        for method in target_methods[target_type]:
+            if config in results.keys() and method in results[config]:
+                for seed in ["42", "666", "777", "888", "999"]:
+                    if seed in results[config][method]:
+                        print(results[config][method][seed], end="")
+                    if seed != "999":
+                        print(",", end="")
+                print()
+            else:
+                print(",,,,")
