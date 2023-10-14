@@ -19,7 +19,7 @@ results = {}
 pattern = re.compile(r"^([\w]+)-([\w]+)-(noise-0\.4-|imbalance-50-)?([\w]+)-([\d]+)-([\d]+)$")
 
 target_type = "image"
-target_setting = "noise"
+target_setting = "standard"
 
 # 遍历文件夹
 for folder_name in os.listdir(runs_folder):
@@ -50,10 +50,10 @@ for folder_name in os.listdir(runs_folder):
 
     # 仅保留当前表格需要的文件进行读取
     if cur_type != target_type or setting != target_setting:
-        print("Exclude " + folder_name)
+        # print("Exclude " + folder_name)
         continue
     
-    print("Include " + folder_name)
+    # print("Include " + folder_name)
 
     log_file_path = os.path.join(folder_path, "train.log")
     # 检查log文件是否存在
