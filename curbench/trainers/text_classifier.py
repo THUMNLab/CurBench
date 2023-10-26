@@ -78,7 +78,7 @@ class TextClassifier():
 
 
     def _train(self):
-        best_metrics = [0.0] * len(self.valid_loader)
+        best_metrics = [-10.0] * len(self.valid_loader)
 
         for epoch in range(self.epochs):
             t = time.time()
