@@ -116,7 +116,7 @@ class Minimax(BaseCL):
                 # text classification
                 inputs = {k: v.to(self.device) for k, v in data.items() 
                             if k not in ['labels', 'indices']}
-                labels = data['labels'].to(self.device)
+                labels = data['labels'].long().to(self.device)
                 indices = data['indices'].to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.net(**inputs)[0] # logits, (hidden_states), (attentions)
