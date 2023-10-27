@@ -59,7 +59,7 @@ class MetaWeightNet(BaseCL):
         elif isinstance(train_data, dict):        # data from datasets.arrow_dataset.Dataset
             train_inputs = {k: v.to(self.device) for k, v in train_data.items() 
                            if k not in ['labels', 'indices']}
-            train_labels = train_data['labels'].to(self.device)
+            train_labels = train_data['labels'].long().to(self.device)
             train_outputs = meta_net(**train_inputs)[0]
         elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
             train_inputs = train_data.to(self.device)
@@ -85,7 +85,7 @@ class MetaWeightNet(BaseCL):
         elif isinstance(meta_data, dict):        # data from datasets.arrow_dataset.Dataset
             meta_inputs = {k: v.to(self.device) for k, v in meta_data.items() 
                            if k not in ['labels', 'indices']}
-            meta_labels = meta_data['labels'].to(self.device)
+            meta_labels = meta_data['labels'].long().to(self.device)
             meta_outputs = meta_net(**meta_inputs)[0]
         elif isinstance(meta_data, pygBatch):    # data from torch_geometric.datasets
             meta_inputs = meta_data.to(self.device)
