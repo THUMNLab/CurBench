@@ -25,44 +25,59 @@ class DataParameters(BaseCL):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         self.class_size = self.net.num_classes
         
-        self.data_weights = torch.tensor(
-            np.ones(self.data_size) * np.log(self.init_data_param),
-            dtype=torch.float32, requires_grad=True, device=self.device
-        )
-        self.data_optimizer = SparseSGD([self.data_weights], 
-            lr=self.lr_data_param, momentum=0.9, skip_update_zero_grad=True
-        ) # add weight decay at loss instead of here
-        self.data_optimizer.zero_grad()
+        if self.init_data_param:
+            self.data_weights = torch.tensor(
+                np.ones(self.data_size) * np.log(self.init_data_param),
+                dtype=torch.float32, requires_grad=True, device=self.device
+            )
+            self.data_optimizer = SparseSGD([self.data_weights], 
+                lr=self.lr_data_param, momentum=0.9, skip_update_zero_grad=True
+            ) # add weight decay at loss instead of here
+            self.data_optimizer.zero_grad()
 
-        self.class_weights = torch.tensor(
-            np.ones(self.class_size) * np.log(self.init_class_param),
-            dtype=torch.float32, requires_grad=True, device=self.device
-        )
-        self.class_optimizer = SparseSGD([self.class_weights], 
-            lr=self.lr_class_param, momentum=0.9, skip_update_zero_grad=True
-        ) # add weight decay at loss instead of here
-        self.class_optimizer.zero_grad()
+        if self.init_class_param:
+            self.class_weights = torch.tensor(
+                np.ones(self.class_size) * np.log(self.init_class_param),
+                dtype=torch.float32, requires_grad=True, device=self.device
+            )
+            self.class_optimizer = SparseSGD([self.class_weights], 
+                lr=self.lr_class_param, momentum=0.9, skip_update_zero_grad=True
+            ) # add weight decay at loss instead of here
+            self.class_optimizer.zero_grad()
 
 
     def loss_curriculum(self, outputs, labels, indices, **kwargs):
-        # update last batch
-        self.data_optimizer.step()
-        self.class_optimizer.step()
+        if self.init_data_param:
+            # update last batch
+            self.data_optimizer.step()
+            self.data_weights.data.clamp_(min=np.log(1/20), max=np.log(20))
+            # calculate current batch
+            self.data_optimizer.zero_grad()
+            data_weights = self.data_weights[indices]
 
-        self.data_weights.data.clamp_(min=np.log(1/20), max=np.log(20))
-        self.class_weights.data.clamp_(min=np.log(1/20), max=np.log(20))
+        if self.init_class_param:
+            # update last batch
+            self.class_optimizer.step()
+            self.class_weights.data.clamp_(min=np.log(1/20), max=np.log(20))
+            # calculate current batch
+            self.class_optimizer.zero_grad()
+            class_weights = self.class_weights[labels]
 
-        # calculate current batch
-        self.data_optimizer.zero_grad()
-        self.class_optimizer.zero_grad()
-
-        data_weights = self.data_weights[indices]
-        class_weights = self.class_weights[labels]
-        sigma = torch.exp(data_weights) + torch.exp(class_weights)
-
-        loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
-             + (0.5 * self.wd_data_param * data_weights ** 2).sum()     \
-             + (0.5 * self.wd_class_param * class_weights ** 2).sum()
+        if self.init_data_param and self.init_class_param:
+            sigma = torch.exp(data_weights) + torch.exp(class_weights)
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
+                + (0.5 * self.wd_data_param * data_weights ** 2).sum()      \
+                + (0.5 * self.wd_class_param * class_weights ** 2).sum()
+        elif self.init_data_param:
+            sigma = torch.exp(data_weights)
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
+                + (0.5 * self.wd_data_param * data_weights ** 2).sum()
+        elif self.init_class_param:
+            sigma = torch.exp(class_weights)
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
+                + (0.5 * self.wd_class_param * class_weights ** 2).sum()
+        else:
+            loss = self.criterion(outputs, labels)
         return torch.mean(loss)
 
 
