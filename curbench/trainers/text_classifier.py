@@ -2,6 +2,7 @@ import os
 import time
 import torch
 from tqdm import tqdm
+from memory_profiler import memory_usage
 
 from ..datasets.text import get_dataset, get_metric
 from ..backbones.text import get_net, get_tokenizer
@@ -74,7 +75,7 @@ class TextClassifier():
         log_info = '%s-%s-%s-%d-%d' % (
             algorithm_name, data_name, net_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), algorithm_name)
 
 
     def _train(self):
@@ -142,7 +143,11 @@ class TextClassifier():
 
     def fit(self):
         set_random(self.random_seed)
+        starttime = time.time()
         self._train()
+        endtime = time.time()
+        self.logger.info("Training Time = %d" % (endtime - starttime))
+        self.logger.info("Training Mem = %d" % (torch.cuda.max_memory_allocated(self.device)))   
 
 
     def evaluate(self, net_dir=None):

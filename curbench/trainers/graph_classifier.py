@@ -62,7 +62,7 @@ class GraphClassifier():
         log_info = '%s-%s-%s-%d-%d' % (
             algorithm_name, data_name, net_name, num_epochs, random_seed)
         self.log_dir = create_log_dir(log_info)
-        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'))
+        self.logger = get_logger(os.path.join(self.log_dir, 'train.log'), algorithm_name)
 
 
     def _train(self):
@@ -127,7 +127,11 @@ class GraphClassifier():
 
     def fit(self):
         set_random(self.random_seed)
+        starttime = time.time()
         self._train()
+        endtime = time.time()
+        self.logger.info("Training Time = %d" % (endtime - starttime))
+        self.logger.info("Training Mem  = %d" % (torch.cuda.max_memory_allocated(self.device)))   
 
 
     def evaluate(self, net_dir=None):
