@@ -2,7 +2,6 @@ import os
 import time
 import torch
 from tqdm import tqdm
-from memory_profiler import memory_usage
 
 from ..datasets.vision import get_dataset
 from ..backbones.vision import get_net
