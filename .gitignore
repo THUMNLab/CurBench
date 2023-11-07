@@ -6,9 +6,8 @@ __pycache__
 /data
 /net
 /runs*
-/robust
-/complex
-/complex_past
+/robust*
+/complex*
 
 *.log
 old*
@@ -18,3 +17,4 @@ test.py
 wrapper.py
 scripts
 run.py
+copy.py
