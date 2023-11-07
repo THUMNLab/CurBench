@@ -152,4 +152,4 @@ class GraphClassifier():
         if net_dir is None: net_dir = self.log_dir
         net_file = os.path.join(net_dir, 'net.pkl')
         assert os.path.exists(net_file), 'Assert Error: the net file does not exist'
-        self.net.load_state_dict(torch.load(net_file))
+        self.net.load_state_dict(torch.load(net_file, map_location='cuda:0'))
