@@ -11,7 +11,7 @@ parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--start_rate', type=float, default=0.1)
 parser.add_argument('--grow_rate', type=float, default=0.3)
-parser.add_argument('--grow_interval', type=int, default=50)
+parser.add_argument('--grow_interval', type=int, default=20)
 parser.add_argument('--strategy', type=str, default='random')
 args = parser.parse_args()
 
