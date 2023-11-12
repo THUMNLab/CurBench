@@ -24,8 +24,8 @@ class Superloss(BaseCL):
         loss = self.criterion(outputs, labels)
         origin_loss = loss.detach().cpu().numpy()
 
-        if self.fac > 0.0:
-            self.tau = self.fac * origin_loss.mean() + (1.0 - self.fac) * self.tau
+        if self.tau == 0.0: self.tau = origin_loss.mean()
+        if self.fac > 0.0: self.tau = self.fac * self.tau + (1.0 - self.fac) * origin_loss.mean()
 
         beta = (origin_loss - self.tau) / self.lam
         gamma = -2.0 / np.exp(1.0) + 1e-12
