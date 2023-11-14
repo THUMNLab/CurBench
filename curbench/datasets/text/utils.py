@@ -59,6 +59,7 @@ class UtilDataset(SubDataset):
 
         # pad the entries in each data dict to achieve equal length for all
         entries = ['input_ids', 'token_type_ids', 'attention_mask']
+        entries = [item for item in entries if item in self.keys]
         for entry in entries:
             max_len_input_ids = max([len(res[i][entry]) for i in range(len(res))])
             for i in range(len(res)):
