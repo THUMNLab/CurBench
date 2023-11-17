@@ -9,7 +9,7 @@ parser.add_argument('--net', type=str, default='lenet')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--M', type=float, default=10.0)
+parser.add_argument('--M', type=float, default=1.0)
 args = parser.parse_args()
 
 
