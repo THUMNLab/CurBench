@@ -17,4 +17,5 @@ def get_tudataset_dataset(data_name, data_dir='data/tudataset', split=[8, 1, 1])
         dataset = dataset.shuffle()
         return dataset[:idx_valid], dataset[idx_valid:idx_test], dataset[idx_test:]
     
-    return dataset, *split_dataset(dataset, split)
+    train_dataset, valid_dataset, test_dataset = split_dataset(dataset, split)
+    return dataset, train_dataset, valid_dataset, test_dataset
