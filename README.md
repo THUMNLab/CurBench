@@ -2,8 +2,6 @@
 
 A benchmark for Curriculum Learning.
 
-Actively under development by @THUMNLab
-
 
 ## Environment
 
@@ -32,24 +30,48 @@ pip install -r requirements.txt
 
 ### Vision
 
-**CIFAR10** and **CIFAR100** will be downloaded automatically.
+**CIFAR-10** and **CIFAR-100** will be downloaded automatically.
 
-**ImageNet32** is a downsampled version of ImageNet-1k, i.e., 1281167 training images from 1000 classes and 50000 validation images with 50 images per class, but resizes all images to 32x32 pixels. It needs to be downloaded manually from the [official website](https://image-net.org/download.php). 
+**Tiny-ImageNet** is  a subset of the ILSVRC2012 version of ImageNet and consists of 64 × 64 × 3 down-sampled images. It needs to be downloaded manually from the [official website](https://image-net.org/download.php). 
 
 ``` bash
-CIFAR10: CurBench/data/cifar-10-batches-py/data_batch_1, ...
-CIFAR100: CurBench/data/cifar-100-python/train, ...
-ImageNet32: CurBench/data/imagenet32/train_data_batch_1, ...
+CurBench
+└── data
+    ├── cifar-10-batches-py
+    │   ├── data_batch_1
+    │   ├── data_batch_2
+    │   ├── ...
+    │   └── test_batch
+    ├── cifar-100-python
+    │   ├── train
+    │   ├── test
+    │   └── meta
+    │   └── ...
+    └── tiny-imagenet-200
+        ├── train
+        ├── val
+        └── test
+
+# For easier data processing, we use a Tiny-ImageNet dataset utility class for pytorch: https://gist.github.com/lromor/bcfc69dcf31b2f3244358aea10b7a11b
+# After the processing, the directory becomes:
+
+CurBench
+└── data
+    └── tiny-imagenet-200
+        ├── train_batch
+        ├── val_batch
+        └── ...
 ```
 
 ### Text
 
-**GLUE** will be downloaded automatically and it consists of **cola**, **sst2**, **mrpc**, **qqp**, **stsb**, **mnli**, **qnli**, **rte**, **wnli**.
+**GLUE** will be downloaded automatically and it consists of **cola**, **sst2**, **mrpc**, **qqp**, **stsb**, **mnli**, **qnli**, **rte**, ...
 
 ### Graph
-**Planetoid** will be downloaded automatically and it consists of **Cora**, **CiteSeer**, **PubMed**.
 
-**TUDataset** will be downloaded automatically and it consists of many datasets, among which we choose **NCI1**, **PROTEINS**, **DD**, **PTC_MR**.
+**TUDataset** will be downloaded automatically and it consists of many datasets, among which we choose **MUTAG**, **PROTEINS**, **NCI1**
+
+**OGB** will be downloaded automatically and it consists of many datasets, among which we choose **molhiv**
 
 
 ## Quick Start

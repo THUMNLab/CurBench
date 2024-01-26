@@ -3,6 +3,7 @@ transformers
 datasets
 evaluate
 einops
+ogb
 
 torch
 torchvision

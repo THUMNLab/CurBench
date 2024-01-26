@@ -1,5 +1,6 @@
 from .planetoid import get_planetoid_dataset
-from .tudataset import get_tudataset_dataset, split_dataset
+from .tudataset import get_tudataset_dataset
+from .ogb import get_ogb_dataset
 from .utils import LabelNoise, ClassImbalanced
 
 
@@ -13,6 +14,8 @@ name_trans = {
     'proteins': 'PROTEINS', 
     'dd':       'DD', 
     'ptc_mr':   'PTC_MR',
+
+    'molhiv':   'ogbg-molhiv',
 }
 
 data_dict = {
@@ -25,6 +28,8 @@ data_dict = {
     'proteins': get_tudataset_dataset,
     'dd':       get_tudataset_dataset,
     'ptc_mr':   get_tudataset_dataset,
+
+    'molhiv':   get_ogb_dataset,
 }
 
 task_graph_label_range_map = {
@@ -33,6 +38,7 @@ task_graph_label_range_map = {
     'proteins': [0, 1],
     'dd':       [0, 1], 
     'ptc_mr':   [0, 1],
+    'molhiv':   [0, 1],
 }
 
 def get_dataset(data_name):
@@ -52,30 +58,14 @@ def get_dataset(data_name):
     else:
         noise_ratio = None
 
-    # imbalance setting
-    if 'imbalance' in data_name:
-        try:
-            parts = data_name.split('-')
-            data_name = parts[0]
-            imbalance_mode = parts[2]
-            imbalance_dominant_labels = list(eval(parts[3]))
-            imbalance_dominant_ratio = float(parts[4])
-            imbalance_dominant_minor_floor = int(parts[5])
-            imbalance_exp_mu = float(parts[6])
-        except:
-            assert False, 'Assert Error: data_name shoule be \
-                [dataset]-imbalance-[mode]-[dominant_labels]-[dominant_ratio]-[dominant_minor_floor]-[exp_mu]'
-    else:
-        imbalance_mode = None
-
     # get standard, noisy or imbalanced dataset
     assert data_name in data_dict, 'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    dataset = data_dict[data_name](name_trans[data_name])
-    train_dataset, valid_dataset, test_dataset = split_dataset(dataset)
-    if noise_ratio: 
-        label_range = task_graph_label_range_map[data_name]
-        train_dataset = LabelNoise(train_dataset, noise_ratio, label_range)
-    if imbalance_mode: 
-        train_dataset = ClassImbalanced(train_dataset, imbalance_mode, imbalance_dominant_labels, 
-                                        imbalance_dominant_ratio, imbalance_dominant_minor_floor, imbalance_exp_mu)
-    return dataset, train_dataset, valid_dataset, test_dataset
+    # dataset, train_idx, valid_idx, test_idx = data_dict[data_name](name_trans[data_name])
+    if data_name in ['cora', 'citeseer', 'pubmed']:
+        raise NotImplementedError()
+    else:
+        dataset, train_dataset, valid_dataset, test_dataset = data_dict[data_name](name_trans[data_name])
+        if noise_ratio: 
+            label_range = task_graph_label_range_map[data_name]
+            train_dataset = LabelNoise(train_dataset, noise_ratio, label_range)
+        return dataset, train_dataset, valid_dataset, test_dataset

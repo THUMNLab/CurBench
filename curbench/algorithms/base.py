@@ -126,7 +126,7 @@ class BaseTrainer():
             # 'cora': NodeClassifier, 'citeseer': NodeClassifier, 'pubmed': NodeClassifier,
 
             'mutag': GraphClassifier, 'ptc_mr': GraphClassifier, 'nci1': GraphClassifier, 
-            'proteins': GraphClassifier, 'dd': GraphClassifier, 
+            'proteins': GraphClassifier, 'dd': GraphClassifier, 'molhiv': GraphClassifier,
         }
 
         # allow data name format: [data]-[noise/imbalance]-[args]

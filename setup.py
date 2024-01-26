@@ -5,15 +5,15 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="CurBench",
-    version="0.0.1",
-    author="THUMNLab/clteam",
-    author_email="zhou-yw21@mails.tsinghua.edu.cn",
+    version="1.0.0",
+    author="",
+    author_email="",
     description="Curriculum Learning Benchmark",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/zhouyw16/CurBench",
+    url="",
     project_urls={
-        "Bug Tracker": "https://github.com/zhouyw16/CurBench",
+        "Bug Tracker": "",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
