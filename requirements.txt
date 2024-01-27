@@ -9,3 +9,4 @@ torch
 torchvision
 torchaudio
 torch_geometric
+torchmetrics

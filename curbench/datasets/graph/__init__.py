@@ -2,6 +2,7 @@ from .planetoid import get_planetoid_dataset
 from .tudataset import get_tudataset_dataset
 from .ogb import get_ogb_dataset
 from .utils import LabelNoise, ClassImbalanced
+from torchmetrics.functional.classification import accuracy, auroc
 
 
 name_trans = {
@@ -69,3 +70,16 @@ def get_dataset(data_name):
             label_range = task_graph_label_range_map[data_name]
             train_dataset = LabelNoise(train_dataset, noise_ratio, label_range)
         return dataset, train_dataset, valid_dataset, test_dataset
+
+
+def get_metric(data_name):
+    # allow data name format: [data]-[noise/imbalance]-[args]
+    data_name = data_name.split('-')[0]
+    assert data_name in data_dict, \
+            'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
+    # Connect Error: huggingface.co
+    # return evaluate.load('glue', data_name), data_dict[data_name]
+    if data_name == 'molhiv':
+        return auroc, 'ROC AUC'
+    else:
+        return accuracy, 'Acc'

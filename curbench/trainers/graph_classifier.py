@@ -4,7 +4,7 @@ import torch
 import torch_geometric as pyg
 from tqdm import tqdm
 
-from ..datasets.graph import get_dataset
+from ..datasets.graph import get_dataset, get_metric
 from ..backbones.graph import get_net
 from ..utils import set_random, create_log_dir, get_logger
 
@@ -30,6 +30,7 @@ class GraphClassifier():
         # standard:  'nci1'
         # noise:     'nci1-noise-0.4', 
         self.dataset, train_dataset, valid_dataset, test_dataset = get_dataset(data_name) # data format is a class: to shuffle and split
+        self.metric, self.metric_name = get_metric(data_name)
 
         self.train_loader = pyg.loader.DataLoader(
             train_dataset, batch_size=50, shuffle=True, pin_memory=True, num_workers=4)
@@ -66,12 +67,12 @@ class GraphClassifier():
 
 
     def _train(self):
-        best_acc = 0.0
+        best_metric = 0.0
         for epoch in range(self.epochs):
             t = time.time()
             total = 0
-            correct = 0
             train_loss = 0.0
+            predicts, targets = [], []
 
             loader = self.data_curriculum()                             # curriculum part
             net = self.model_curriculum()                               # curriculum part
@@ -79,8 +80,9 @@ class GraphClassifier():
             net.train()
             for data in tqdm(loader):
                 inputs = data.to(self.device)
-                labels = data.y.to(self.device)
+                labels = data.y.view(-1).to(self.device)
                 indices = data.i.to(self.device)
+                if len(indices) <= 1: continue # for batch norm
 
                 self.optimizer.zero_grad()
                 outputs = net(inputs)
@@ -89,40 +91,43 @@ class GraphClassifier():
                 self.optimizer.step()
 
                 train_loss += loss.item() * data.num_graphs
-                predicts = outputs.argmax(dim=1)
-                correct += predicts.eq(labels).sum().item()
                 total += data.num_graphs
+                predicts += outputs.softmax(dim=1).tolist() if self.dataset.name == 'ogbg-molhiv' \
+                            else outputs.argmax(dim=1).tolist()
+                targets += labels.tolist()
 
             self.lr_scheduler.step()
+            train_metric = self.metric(torch.tensor(predicts), torch.tensor(targets), 
+                           task="multiclass", num_classes=self.dataset.num_classes).item()
             self.logger.info(
-                '[%3d]  Train Data = %6d  Train Acc = %.4f  Loss = %.4f  Time = %.2fs'
-                % (epoch + 1, total, correct / total, train_loss / total, time.time() - t))
+                '[%3d]  Train Data = %6d  Train %s = %.4f  Loss = %.4f  Time = %.2fs'
+                % (epoch + 1, total, self.metric_name, train_metric, train_loss / total, time.time() - t))
 
             if (epoch + 1) % self.log_interval == 0:
-                valid_acc = self._valid(self.valid_loader)
-                if valid_acc > best_acc:
-                    best_acc = valid_acc
+                valid_metric = self._valid(self.valid_loader)
+                if valid_metric > best_metric:
+                    best_metric = valid_metric
                     torch.save(net.state_dict(), os.path.join(self.log_dir, 'net.pkl'))
                 self.logger.info(
-                    '[%3d]  Valid Data = %6d  Valid Acc = %.4f  Best Valid Acc = %.4f' 
-                    % (epoch + 1, len(self.valid_loader.dataset), valid_acc, best_acc))
+                    '[%3d]  Valid Data = %6d  Valid %s = %.4f  Best Valid %s = %.4f' 
+                    % (epoch + 1, len(self.valid_loader.dataset), self.metric_name, valid_metric, self.metric_name, best_metric))
 
 
     def _valid(self, loader):
-        total = 0
-        correct = 0
+        predicts, targets = [], []
 
         self.net.eval()
         with torch.no_grad():
             for data in tqdm(loader):
                 inputs = data.to(self.device)
-                labels = data.y.to(self.device)
+                labels = data.y.view(-1).to(self.device)
 
                 outputs = self.net(inputs)
-                predicts = outputs.argmax(dim=1)
-                correct += predicts.eq(labels).sum().item()
-                total += data.num_graphs
-        return correct / total
+                predicts += outputs.softmax(dim=1).tolist() if self.dataset.name == 'ogbg-molhiv' \
+                            else outputs.argmax(dim=1).tolist()
+                targets += labels.tolist()
+        return self.metric(torch.tensor(predicts), torch.tensor(targets), 
+                           task="multiclass", num_classes=self.dataset.num_classes).item()
     
 
     def fit(self):
@@ -136,11 +141,11 @@ class GraphClassifier():
 
     def evaluate(self, net_dir=None):
         self._load_best_net(net_dir)
-        valid_acc = self._valid(self.valid_loader)
-        test_acc = self._valid(self.test_loader)
-        self.logger.info('Valid Data = %6d  Best Valid Acc = %.4f' % (len(self.valid_loader.dataset), valid_acc))
-        self.logger.info('Test Data  = %6d  Final Test Acc = %.4f' % (len(self.test_loader.dataset), test_acc))
-        return test_acc
+        valid_metric = self._valid(self.valid_loader)
+        test_metric = self._valid(self.test_loader)
+        self.logger.info('Valid Data = %6d  Best Valid %s = %.4f' % (len(self.valid_loader.dataset), self.metric_name, valid_metric))
+        self.logger.info('Test Data  = %6d  Final Test %s = %.4f' % (len(self.test_loader.dataset), self.metric_name, test_metric))
+        return test_metric
 
 
     def export(self, net_dir=None):
@@ -152,4 +157,4 @@ class GraphClassifier():
         if net_dir is None: net_dir = self.log_dir
         net_file = os.path.join(net_dir, 'net.pkl')
         assert os.path.exists(net_file), 'Assert Error: the net file does not exist'
-        self.net.load_state_dict(torch.load(net_file, map_location='cuda:0'))
+        self.net.load_state_dict(torch.load(net_file))
