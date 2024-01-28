@@ -50,7 +50,10 @@ class GraphClassifier():
 
         self.epochs = num_epochs
         self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
+        if self.dataset.name in ['ogbg-molhiv']:
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.001)
+        else:
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.01)
         self.lr_scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0)
 
         self.model_prepare(self.net, self.device, self.epochs,          # curriculum part

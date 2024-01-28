@@ -19,3 +19,4 @@ scripts
 run.py
 copy.py
 delete.py
+read.py
