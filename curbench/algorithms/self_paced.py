@@ -95,7 +95,7 @@ class SelfPaced(BaseCL):
                     outputs = self.teacher_net(**inputs)[0]
                 elif isinstance(data, pygBatch):                # data from torch_geometric.datasets
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.teacher_net(inputs)
                 else:
                     not NotImplementedError()

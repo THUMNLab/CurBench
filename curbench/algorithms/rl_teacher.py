@@ -120,7 +120,7 @@ class RLTeacherOnline(BaseCL):
                     acc += valid_metric / len(self.validationData)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.net(inputs)
                     predicts = outputs.argmax(dim=1)
                     correct += predicts.eq(labels).sum().item()
@@ -206,7 +206,7 @@ class RLTeacherNaive(BaseCL):
                     acc += valid_metric / len(self.validationData)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.net(inputs)
                     predicts = outputs.argmax(dim=1)
                     correct += predicts.eq(labels).sum().item()
@@ -297,7 +297,7 @@ class RLTeacherWindow(BaseCL):
                 acc += valid_metric / len(self.validationData)
             elif isinstance(data,pygBatch):  # graph classifier
                 inputs = data.to(self.device)
-                labels = data.y.to(self.device)
+                labels = data.y.view(-1).to(self.device)
                 outputs = self.net(inputs)
                 predicts = outputs.argmax(dim=1)
                 correct += predicts.eq(labels).sum().item()
@@ -383,7 +383,7 @@ class RLTeacherSampling(BaseCL):
                     acc += valid_metric / len(self.data)
                 elif isinstance(data,pygBatch):  # graph classifier
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.net(inputs)
                     predicts = outputs.argmax(dim=1)
                     correct += predicts.eq(labels).sum().item()

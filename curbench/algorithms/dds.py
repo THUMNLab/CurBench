@@ -76,7 +76,7 @@ class DDS(BaseCL):
             meta_outputs = meta_net(**meta_inputs)[0]
         elif isinstance(meta_data, pygBatch):    # data from torch_geometric.datasets
             meta_inputs = meta_data.to(self.device)
-            meta_labels = meta_data.y.to(self.device)
+            meta_labels = meta_data.y.view(-1).to(self.device)
             meta_outputs = meta_net(meta_inputs)
         else:
             not NotImplementedError()
@@ -95,7 +95,7 @@ class DDS(BaseCL):
             train_outputs = meta_net(**train_inputs)[0]
         elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
             train_inputs = train_data.to(self.device)
-            train_labels = train_data.y.to(self.device)
+            train_labels = train_data.y.view(-1).to(self.device)
             train_outputs = meta_net(train_inputs)
         else:
             not NotImplementedError()
@@ -115,7 +115,7 @@ class DDS(BaseCL):
             train_outputs = meta_net(**train_inputs)[0]
         elif isinstance(train_data, pygBatch):    # data from torch_geometric.datasets
             train_inputs = train_data.to(self.device)
-            train_labels = train_data.y.to(self.device)
+            train_labels = train_data.y.view(-1).to(self.device)
             train_outputs = meta_net(train_inputs)
         else:
             not NotImplementedError()

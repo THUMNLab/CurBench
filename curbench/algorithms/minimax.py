@@ -125,7 +125,7 @@ class Minimax(BaseCL):
                 torch.nn.utils.clip_grad_norm_(self.net.parameters(), 5.0)
             elif isinstance(data, pygBatch):
                 inputs = data.to(self.device)
-                labels = data.y.to(self.device)
+                labels = data.y.view(-1).to(self.device)
                 indices = data.i.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.net(inputs)

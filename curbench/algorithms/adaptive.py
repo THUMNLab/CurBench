@@ -99,7 +99,7 @@ class Adaptive(BaseCL):
                     outputs = self.pretrained_model(**inputs)[0]
                 elif isinstance(data, pygBatch):
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.pretrained_model(inputs)
                 else:
                     raise NotImplementedError()
@@ -125,7 +125,7 @@ class Adaptive(BaseCL):
                     outputs = self.pretrained_model(**inputs)[0]
                 elif isinstance(data, pygBatch):
                     inputs = data.to(self.device)
-                    labels = data.y.to(self.device)
+                    labels = data.y.view(-1).to(self.device)
                     outputs = self.pretrained_model(inputs)
                 else:
                     raise NotImplementedError()
