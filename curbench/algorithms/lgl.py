@@ -8,15 +8,16 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class LocalToGlobal(BaseCL):
-    """
+class LGL(BaseCL):
+    """Local to Global Learning.
     
-    Local to global learning: Gradually adding classes for training deep neural networks. http://openaccess.thecvf.com/content_CVPR_2019/papers/Cheng_Local_to_Global_Learning_Gradually_Adding_Classes_for_Training_Deep_CVPR_2019_paper.pdf
+    Local to Global Learning: Gradually Adding Classes for Training Deep Neural Networks
+    http://openaccess.thecvf.com/content_CVPR_2019/papers/Cheng_Local_to_Global_Learning_Gradually_Adding_Classes_for_Training_Deep_CVPR_2019_paper.pdf
     """
     def __init__(self, start_rate, grow_rate, grow_interval, strategy):
-        super(LocalToGlobal, self).__init__()
+        super(LGL, self).__init__()
 
-        self.name = 'local_to_global'
+        self.name = 'lgl'
         self.epoch = 0
         self.classes = np.array([], dtype=int)
 
@@ -106,11 +107,11 @@ class LocalToGlobal(BaseCL):
 
 
 
-class LocalToGlobalTrainer(BaseTrainer):
+class LGLTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  start_rate, grow_rate, grow_interval, strategy):
         
-        cl = LocalToGlobal(start_rate, grow_rate, grow_interval, strategy)
+        cl = LGL(start_rate, grow_rate, grow_interval, strategy)
 
-        super(LocalToGlobalTrainer, self).__init__(
+        super(LGLTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

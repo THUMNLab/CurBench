@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import MinimaxTrainer
+from curbench.algorithms import MCLTrainer
 
 
 parser = argparse.ArgumentParser()
@@ -28,7 +28,7 @@ parser.add_argument('--fe_central_sum', action='store_true')
 args = parser.parse_args()
 
 
-trainer = MinimaxTrainer(
+trainer = MCLTrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,

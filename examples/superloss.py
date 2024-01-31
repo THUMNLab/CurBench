@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import SuperlossTrainer
+from curbench.algorithms import SuperLossTrainer
 
 
 parser = argparse.ArgumentParser()
@@ -15,7 +15,7 @@ parser.add_argument('--fac', type=float, default=0.9)
 args = parser.parse_args()
 
 
-trainer = SuperlossTrainer(
+trainer = SuperLossTrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,

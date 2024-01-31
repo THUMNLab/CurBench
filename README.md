@@ -21,8 +21,6 @@ A benchmark for Curriculum Learning.
 
 ```bash
 pip install -r requirements.txt 
-# for chinese user, if the download speed is slow, add:
--i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 
@@ -78,21 +76,23 @@ CurBench
 
 ``` bash
 # 1. clone from the repository
-git clone https://github.com/zhouyw16/CurBench
+git clone 
 cd CurBench
 
 # 2. pip install local module: curbench
 pip install -e .
 
 # 3. prepare dataset
-ln -s /DATA/DATANAS1/zyw16/MMData data
 
 # 4. run the example code
 python examples/base.py
 ```
 
 
-## Run
+## Run 
+
+### Example
+
 ```bash
 # 1. vision standard
 python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpu <0/1/2/>
@@ -104,6 +104,7 @@ python examples/base.py --data <rte/sst2/cola/> --net <lstm/bert/gpt> --gpu <0/1
 python examples/base.py --data <nci1/ptc_mr/> --net <gcn/gat/sage> --gpu <0/1/2/>
 ```
 
-
-## License
-We follow [Apache license](LICENSE) across the entire codebase from v0.2.
+### Batch
+```bash
+python run.py
+```

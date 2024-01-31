@@ -6,13 +6,14 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class Superloss(BaseCL):
-    """
+class SuperLoss(BaseCL):
+    """SuperLoss.
     
-    Superloss: A generic loss for robust curriculum learning. https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf
+    SuperLoss: A Generic Loss for Robust Curriculum Learning
+    https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf
     """
     def __init__(self, tau, lam, fac):
-        super(Superloss, self).__init__()
+        super(SuperLoss, self).__init__()
 
         self.name = 'superloss'
         self.tau = tau
@@ -36,11 +37,11 @@ class Superloss(BaseCL):
 
 
 
-class SuperlossTrainer(BaseTrainer):
+class SuperLossTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, 
                  tau, lam, fac):
         
-        cl = Superloss(tau, lam, fac)
+        cl = SuperLoss(tau, lam, fac)
         
-        super(SuperlossTrainer, self).__init__(
+        super(SuperLossTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

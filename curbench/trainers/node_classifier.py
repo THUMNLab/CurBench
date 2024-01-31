@@ -100,7 +100,11 @@ class NodeClassifier():
 
     def fit(self):
         set_random(self.random_seed)
+        starttime = time.time()
         self._train()
+        endtime = time.time()
+        self.logger.info("Training Time = %ds" % (endtime - starttime))
+        self.logger.info("Training Mem  = %dB" % (torch.cuda.max_memory_allocated(self.device)))
 
 
     def evaluate(self, net_dir=None):

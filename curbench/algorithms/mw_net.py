@@ -5,19 +5,20 @@ from torch.utils.data import Subset
 from torch_geometric.data.batch import Batch as pygBatch
 
 from .base import BaseTrainer, BaseCL
-from .utils import set_parameter
+from .utils import VNet, set_parameter
 
 
 
-class MetaReweight(BaseCL):
-    """Meta Reweight CL Algorithm.
+class MWNet(BaseCL):
+    """Meta-Weight-Net Curriculum Learning.
     
-    Learning to reweight examples for robust deep learning. http://proceedings.mlr.press/v80/ren18a/ren18a.pdf
+    Meta-Weight-Net: Learning an Explicit Mapping For Sample Weighting
+    https://proceedings.neurips.cc/paper/2019/file/e58cc5ca94270acaceed13bc82dfedf7-Paper.pdf
     """
     def __init__(self, ):
-        super(MetaReweight, self).__init__()
-        self.name = 'meta_reweight'
-    
+        super(MWNet, self).__init__()
+        self.name = 'mw_net'
+
 
     def _meta_split(self):
         split = self.data_size // 10
@@ -33,6 +34,12 @@ class MetaReweight(BaseCL):
         self._meta_split()
         self.meta_loader = self._dataloader(self.meta_dataset)
         self.meta_iter = iter(self.meta_loader)
+
+
+    def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
+        super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
+        self.vnet = VNet(1, 100, 1).to(self.device)
+        self.optimizer_v = torch.optim.Adam(self.vnet.parameters(), lr=1e-3, weight_decay=1e-4)
 
 
     def data_curriculum(self, **kwargs):
@@ -61,9 +68,9 @@ class MetaReweight(BaseCL):
             train_outputs = meta_net(train_inputs)
         else:
             not NotImplementedError()
-        train_loss = self.criterion(train_outputs, train_labels)
-        eps = torch.zeros_like(train_loss, requires_grad=True)
-        grads = torch.autograd.grad(torch.mean(train_loss * eps), (meta_net.parameters()), retain_graph=True, create_graph=True)
+        train_loss = self.criterion(train_outputs, train_labels).view(-1, 1)
+        v_lambda = self.vnet(train_loss)
+        grads = torch.autograd.grad(torch.mean(train_loss * v_lambda), (meta_net.parameters()), retain_graph=True, create_graph=True)
         for (name, param), grad in zip(meta_net.named_parameters(), grads):
             set_parameter(meta_net, name, param.add(grad, alpha=-self.optimizer.param_groups[0]['lr']))
 
@@ -88,20 +95,19 @@ class MetaReweight(BaseCL):
         else:
             not NotImplementedError()
         meta_loss = self.criterion(meta_outputs, meta_labels)
-        grad_eps = torch.autograd.grad(torch.mean(meta_loss), eps)[0]
+        self.optimizer_v.zero_grad()
+        torch.mean(meta_loss).backward()
+        self.optimizer_v.step()
 
-        assert not grad_eps.requires_grad
-        w_tilde = torch.clamp(-grad_eps, min=0.0)
-        norm_c = torch.sum(w_tilde) + 1e-12
-        weights = w_tilde / norm_c
-        loss = self.criterion(outputs, labels)
-        return torch.mean(loss * weights)
+        loss = self.criterion(outputs, labels).view(-1, 1)
+        weights = self.vnet(loss)
+        return torch.mean(loss * weights.detach())
 
 
-class MetaReweightTrainer(BaseTrainer):
+class MWNetTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed):
         
-        cl = MetaReweight()
+        cl = MWNet()
 
-        super(MetaReweightTrainer, self).__init__(
+        super(MWNetTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

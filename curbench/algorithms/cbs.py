@@ -8,9 +8,11 @@ from .utils import KernelConv2d
 
 
 class CBS(BaseCL):
-    """
+    """Curriculum by Smoothing. 
     
-    Curriculum by smoothing. https://proceedings.neurips.cc/paper/2020/file/f6a673f09493afcd8b129a0bcf1cd5bc-Paper.pdf
+    Curriculum by Smoothing. 
+    https://proceedings.neurips.cc/paper/2020/file/f6a673f09493afcd8b129a0bcf1cd5bc-Paper.pdf
+    https://www.github.com/pairlab/CBS
     """
     def __init__(self, kernel_size, start_std, grow_factor, grow_interval):
         super(CBS, self).__init__()

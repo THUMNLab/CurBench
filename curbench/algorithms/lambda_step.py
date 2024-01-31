@@ -9,8 +9,8 @@ from .base import BaseTrainer, BaseCL
 class LambdaStep(BaseCL):
     """Lambda Step CL Algorithm. A predefined CL with a continuous scheduler.
 
-    Source:
-        On the power of curriculum learning in training deep networks. http://proceedings.mlr.press/v97/hacohen19a/hacohen19a.pdf
+    On The Power of Curriculum Learning in Training Deep Networks. http://proceedings.mlr.press/v97/hacohen19a/hacohen19a.pdf
+    A Survey on Curriculum Learning. https://arxiv.org/pdf/2010.13166.pdf
 
     Attributes:
         name, dataset, data_size, batch_size, n_batches: Base class attributes.

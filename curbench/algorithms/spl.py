@@ -7,10 +7,11 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class SelfPaced(BaseCL):
-    """Self-Paced Learning CL Algorithm. 
+class SPL(BaseCL):
+    """Self-Paced Learning. 
 
     Self-paced learning for latent variable models. https://proceedings.neurips.cc/paper/2010/file/e57c6b956a6521b28495f2886ca0977a-Paper.pdf
+    A Survey on Curriculum Learning. https://arxiv.org/pdf/2010.13166.pdf
 
     Attributes:
         name, dataset, data_size, batch_size, n_batches: Base class attributes.
@@ -24,9 +25,9 @@ class SelfPaced(BaseCL):
         weights: The weights of all training data instances.
     """
     def __init__(self, start_rate, grow_epochs, grow_fn, weight_fn):
-        super(SelfPaced, self).__init__()
+        super(SPL, self).__init__()
 
-        self.name = 'self_paced'
+        self.name = 'spl'
         self.epoch = 0
         self.teacher_net = None
 
@@ -40,6 +41,7 @@ class SelfPaced(BaseCL):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
         if self.teacher_net is None:                            # In Self-Paced Learning, the network is itself.
             self.teacher_net = net                              # In Transfer Teacher, the network is teacher net.
+        self.teacher_net.to(self.device)
 
 
     def data_curriculum(self, **kwargs):
@@ -118,11 +120,11 @@ class SelfPaced(BaseCL):
             raise NotImplementedError()
 
 
-class SelfPacedTrainer(BaseTrainer):
+class SPLTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed, 
                  start_rate, grow_epochs, grow_fn, weight_fn):
         
-        cl = SelfPaced(start_rate, grow_epochs, grow_fn, weight_fn)
+        cl = SPL(start_rate, grow_epochs, grow_fn, weight_fn)
 
-        super(SelfPacedTrainer, self).__init__(
+        super(SPLTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

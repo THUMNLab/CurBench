@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import LocalToGlobalTrainer
+from curbench.algorithms import LGLTrainer
 
 
 parser = argparse.ArgumentParser()
@@ -16,7 +16,7 @@ parser.add_argument('--strategy', type=str, default='random')
 args = parser.parse_args()
 
 
-trainer = LocalToGlobalTrainer(
+trainer = LGLTrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,

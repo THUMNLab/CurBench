@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import BaseTrainer, CoarseToFineTrainer
+from curbench.algorithms import BaseTrainer, TTCLTrainer
 
 
 parser = argparse.ArgumentParser()
@@ -9,7 +9,10 @@ parser.add_argument('--net', type=str, default='lenet')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=200)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--cluster_K', type=int, default=3)
+parser.add_argument('--start_rate', type=float, default=0.0)
+parser.add_argument('--grow_epochs', type=int, default=100)
+parser.add_argument('--grow_fn', type=str, default='linear')
+parser.add_argument('--weight_fn', type=str, default='hard')
 parser.add_argument('--teacher_dir', type=str, default=None)
 args = parser.parse_args()
 
@@ -28,14 +31,17 @@ args.teacher_dir = 'runs/base-%s-%s-%d-%d' % (args.data.split('-')[0], args.net,
 teacher_net = pretrainer.export(args.teacher_dir)
 
 
-trainer = CoarseToFineTrainer(
+trainer = TTCLTrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,
     num_epochs=args.epochs,
     random_seed=args.seed,
-    cluster_K=args.cluster_K,
-    pretrained_net=teacher_net,
+    start_rate=args.start_rate,
+    grow_epochs=args.grow_epochs,
+    grow_fn=args.grow_fn,
+    weight_fn=args.weight_fn,
+    teacher_net=teacher_net,
 )
 trainer.fit()
 trainer.evaluate()

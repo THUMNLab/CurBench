@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import DataParametersTrainer
+from curbench.algorithms import DCLTrainer
 
 
 parser = argparse.ArgumentParser()
@@ -18,7 +18,7 @@ parser.add_argument('--wd_data_param', type=float, default=0.0)
 args = parser.parse_args()
 
 
-trainer = DataParametersTrainer(
+trainer = DCLTrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,

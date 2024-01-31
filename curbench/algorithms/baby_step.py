@@ -9,10 +9,10 @@ from .base import BaseTrainer, BaseCL
 class BabyStep(BaseCL):
     """Baby Step Algorithm. A predefined CL with a discrete scheduler.
 
-    Sources:
-        Curriculum learning. https://dl.acm.org/doi/pdf/10.1145/1553374.1553380
-        Visualizing and understanding curriculum learning for long short-term memory networks. https://arxiv.org/pdf/1611.06204.pdf
-        From baby steps to leapfrog: How "less is more" in unsupervised dependency parsing. https://aclanthology.org/N10-1116.pdf
+    Curriculum learning. https://dl.acm.org/doi/pdf/10.1145/1553374.1553380
+    Visualizing and understanding curriculum learning for long short-term memory networks. https://arxiv.org/pdf/1611.06204.pdf
+    From baby steps to leapfrog: How "less is more" in unsupervised dependency parsing. https://aclanthology.org/N10-1116.pdf
+    A Survey on Curriculum Learning. https://arxiv.org/pdf/2010.13166.pdf
 
     Attributes:
         name, dataset, data_size, batch_size, n_batches: Base class attributes.

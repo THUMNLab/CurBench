@@ -1,6 +1,6 @@
 import argparse
 
-from curbench.algorithms import MetaWeightNetTrainer
+from curbench.algorithms import LRETrainer
 
 
 parser = argparse.ArgumentParser()
@@ -12,7 +12,7 @@ parser.add_argument('--seed', type=int, default=42)
 args = parser.parse_args()
 
 
-trainer = MetaWeightNetTrainer(
+trainer = LRETrainer(
     data_name=args.data,
     net_name=args.net,
     gpu_index=args.gpu,

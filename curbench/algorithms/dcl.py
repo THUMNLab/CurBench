@@ -6,12 +6,18 @@ from .utils import SparseSGD
 
 
 
-class DataParameters(BaseCL):
+class DCL(BaseCL):
+    """Data Parameters Curriculum Learning. 
+    
+    Data Parameters: A New Family of Parameters for Learning a Differentiable Curriculum. 
+    https://proceedings.neurips.cc/paper/2019/file/926ffc0ca56636b9e73c565cf994ea5a-Paper.pdf
+    https://github.com/apple/ml-data-parameters
+    """
     def __init__(self, init_class_param, lr_class_param, wd_class_param, 
                  init_data_param, lr_data_param, wd_data_param):
-        super(DataParameters, self).__init__()
+        super(DCL, self).__init__()
 
-        self.name = 'data_parameters'
+        self.name = 'dcl'
 
         self.init_class_param = init_class_param
         self.lr_class_param = lr_class_param
@@ -81,14 +87,14 @@ class DataParameters(BaseCL):
         return torch.mean(loss)
 
 
-class DataParametersTrainer(BaseTrainer):
+class DCLTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  init_class_param, lr_class_param, wd_class_param, 
                  init_data_param, lr_data_param, wd_data_param):
         
-        cl = DataParameters(init_class_param, lr_class_param, wd_class_param, init_data_param, lr_data_param, wd_data_param)
+        cl = DCL(init_class_param, lr_class_param, wd_class_param, init_data_param, lr_data_param, wd_data_param)
         
-        super(DataParametersTrainer, self).__init__(
+        super(DCLTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)
 
 

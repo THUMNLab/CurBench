@@ -2,18 +2,18 @@ from .base import BaseCL, BaseTrainer
 
 from .baby_step import BabyStep, BabyStepTrainer
 from .lambda_step import LambdaStep, LambdaStepTrainer
-from .self_paced import SelfPaced, SelfPacedTrainer
-from .transfer_teacher import TransferTeacher, TransferTeacherTrainer
-from .superloss import Superloss, SuperlossTrainer
-from .data_parameters import DataParameters, DataParametersTrainer
-from .local_to_global import LocalToGlobal, LocalToGlobalTrainer
+from .spl import SPL, SPLTrainer
+from .ttcl import TTCL, TTCLTrainer
+from .superloss import SuperLoss, SuperLossTrainer
+from .dcl import DCL, DCLTrainer
+from .lgl import LGL, LGLTrainer
 from .dihcl import DIHCL, DIHCLTrainer
 from .cbs import CBS, CBSTrainer
-from .minimax import Minimax, MinimaxTrainer
-from .adaptive import Adaptive, AdaptiveTrainer
-from .coarse_to_fine import CoarseToFine, CoarseToFineTrainer
+from .mcl import MCL, MCLTrainer
+from .adaptive_cl import AdaptiveCL, AdaptiveCLTrainer
+from .c2f import C2F, C2FTrainer
 from .rl_teacher import RLTeacherOnline, RLTeacherNaive, RLTeacherWindow, RLTeacherSampling, RLTeacherTrainer
 from .screener_net import ScreenerNet, ScreenerNetTrainer
-from .meta_reweight import MetaReweight, MetaReweightTrainer
-from .meta_weight_net import MetaWeightNet, MetaWeightNetTrainer
+from .lre import LRE, LRETrainer
+from .mw_net import MWNet, MWNetTrainer
 from .dds import DDS, DDSTrainer

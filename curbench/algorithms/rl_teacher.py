@@ -54,9 +54,11 @@ class BoltsmannPolicy:
 
 
 class RLTeacherOnline(BaseCL):
-    """Reinforcement Learning Teacher CL Algorithm. 
+    """Reinforcement Learning Teacher. 
 
-    Teacher-student curriculum learning. https://arxiv.org/pdf/1707.00183
+    Teacher-Student Curriculum Learning
+    https://arxiv.org/pdf/1707.00183
+    https://github.com/tambetm/TSCL
     """
     def __init__(self, ):
         super(RLTeacherOnline, self).__init__()
@@ -144,6 +146,12 @@ class RLTeacherOnline(BaseCL):
 
 
 class RLTeacherNaive(BaseCL):
+    """Reinforcement Learning Teacher. 
+
+    Teacher-Student Curriculum Learning
+    https://arxiv.org/pdf/1707.00183
+    https://github.com/tambetm/TSCL
+    """
     def __init__(self, ):
         super(RLTeacherNaive, self).__init__()
 
@@ -232,6 +240,12 @@ class RLTeacherNaive(BaseCL):
         return self.data_loader
 
 class RLTeacherWindow(BaseCL):
+    """Reinforcement Learning Teacher. 
+
+    Teacher-Student Curriculum Learning
+    https://arxiv.org/pdf/1707.00183
+    https://github.com/tambetm/TSCL
+    """
     def __init__(self, ):
         super(RLTeacherWindow, self).__init__()
 
@@ -319,6 +333,12 @@ class RLTeacherWindow(BaseCL):
 
 
 class RLTeacherSampling(BaseCL):
+    """Reinforcement Learning Teacher. 
+
+    Teacher-Student Curriculum Learning
+    https://arxiv.org/pdf/1707.00183
+    https://github.com/tambetm/TSCL
+    """
     def __init__(self, ):
         super(RLTeacherSampling, self).__init__()
 

@@ -12,7 +12,8 @@ from .base import BaseTrainer, BaseCL
 class ScreenerNet(BaseCL):
     """ScreenerNet CL Algorithm. 
     
-    Screenernet: Learning self-paced curriculum for deep neural networks. https://arxiv.org/pdf/1801.00904
+    ScreenerNet: Learning Self-Paced Curriculum for Deep Neural Networks.
+    https://arxiv.org/pdf/1801.00904
     """
     def __init__(self, M):
         super(ScreenerNet, self).__init__()

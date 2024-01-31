@@ -8,15 +8,16 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class CoarseToFine(BaseCL):
-    """
+class C2F(BaseCL):
+    """Coarse-to-Fine Curriculum Learning.
     
-    Coarse-to-Fine Curriculum Learning. https://arxiv.org/pdf/2106.04072
+    Coarse-to-Fine Curriculum Learning. 
+    https://arxiv.org/pdf/2106.04072
     """
     def __init__(self, cluster_K, pretrained_net):
-        super(CoarseToFine, self).__init__()
+        super(C2F, self).__init__()
 
-        self.name = 'coarse_to_fine'
+        self.name = 'c2f'
 
         self.epoch = 0
         self.classify_cnt = 0
@@ -31,6 +32,7 @@ class CoarseToFine(BaseCL):
 
     def model_prepare(self, net, device, epochs, criterion, optimizer, lr_scheduler, **kwargs):
         super().model_prepare(net, device, epochs, criterion, optimizer, lr_scheduler)
+        self.pretrained_model.to(self.device)
 
         self.num_classes = self.net.num_classes
         self.confusion_matrix = torch.zeros(self.num_classes ** 2)
@@ -164,11 +166,11 @@ class CoarseToFine(BaseCL):
         self.schedule[len(self.schedule) - 1] = self.epochs
 
 
-class CoarseToFineTrainer(BaseTrainer):
+class C2FTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  cluster_K, pretrained_net):
 
-        cl = CoarseToFine(cluster_K, pretrained_net)
+        cl = C2F(cluster_K, pretrained_net)
 
-        super(CoarseToFineTrainer, self).__init__(
+        super(C2FTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

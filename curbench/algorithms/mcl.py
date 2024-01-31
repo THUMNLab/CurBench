@@ -11,17 +11,19 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class Minimax(BaseCL):
-    """Minimax CL Algorithm.
+class MCL(BaseCL):
+    """Minimax Curriculum Learning.
     
-    Minimax curriculum learning: Machine teaching with desirable difficulties and scheduled diversity. https://openreview.net/pdf?id=BywyFQlAW
+    Minimax Curriculum Learning: Machine Teaching with Desirable Difficulties and Scheduled Diversity
+    https://openreview.net/pdf?id=BywyFQlAW
+    https://github.com/tianyizhou/MCL
     """
     def __init__(self, schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
-        super(Minimax, self).__init__()
+        super(MCL, self).__init__()
 
-        self.name = 'minimax'
+        self.name = 'mcl'
         self.epoch = 0
         self.schedule_epoch = schedule_epoch
         self.warm_epoch = warm_epoch
@@ -228,15 +230,15 @@ class Minimax(BaseCL):
         return centrality
 
 
-class MinimaxTrainer(BaseTrainer):
+class MCLTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum):
         
-        cl = Minimax(schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
+        cl = MCL(schedule_epoch, warm_epoch, lam, minlam, gamma, delta,
                  initial_size, fe_alpha, fe_beta, fe_gamma, fe_lambda,
                  fe_entropy, fe_gsrow, fe_central_op, fe_central_min, fe_central_sum)
 
-        super(MinimaxTrainer, self).__init__(
+        super(MCLTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)

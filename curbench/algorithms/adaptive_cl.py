@@ -7,16 +7,17 @@ from .base import BaseTrainer, BaseCL
 
 
 
-class Adaptive(BaseCL):
-    """
+class AdaptiveCL(BaseCL):
+    """Adaptive Curriculum Learning. 
     
-    Adaptive Curriculum Learning. https://openaccess.thecvf.com/content/ICCV2021/papers/Kong_Adaptive_Curriculum_Learning_ICCV_2021_paper.pdf
+    Adaptive Curriculum Learning. 
+    https://openaccess.thecvf.com/content/ICCV2021/papers/Kong_Adaptive_Curriculum_Learning_ICCV_2021_paper.pdf
     """
     def __init__(self, pace_p, pace_q, pace_r, inv,
                  alpha, gamma, gamma_decay, bottom_gamma, pretrained_net):
-        super(Adaptive, self).__init__()
+        super(AdaptiveCL, self).__init__()
 
-        self.name = 'adaptive'
+        self.name = 'adaptive_cl'
 
         self.epoch = 0
         self.pace_p = pace_p
@@ -136,14 +137,14 @@ class Adaptive(BaseCL):
         self.difficulty = (1 - self.alpha) * self.difficulty + self.alpha * current_difficulty
 
 
-class AdaptiveTrainer(BaseTrainer):
+class AdaptiveCLTrainer(BaseTrainer):
     def __init__(self, data_name, net_name, gpu_index, num_epochs, random_seed,
                  pace_p, pace_q, pace_r, inv, alpha, gamma, gamma_decay, 
                  bottom_gamma, pretrained_net):
         
-        cl = Adaptive(pace_p, pace_q, pace_r, inv, alpha, 
+        cl = AdaptiveCL(pace_p, pace_q, pace_r, inv, alpha, 
                       gamma, gamma_decay, bottom_gamma, pretrained_net)
 
-        super(AdaptiveTrainer, self).__init__(
+        super(AdaptiveCLTrainer, self).__init__(
             data_name, net_name, gpu_index, num_epochs, random_seed, cl)
 

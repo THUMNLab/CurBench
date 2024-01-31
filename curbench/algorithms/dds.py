@@ -11,9 +11,10 @@ from .utils import set_parameter
 
 
 class DDS(BaseCL):
-    """
+    """Differentiable Data Selection Curriculum Learning
     
-    Optimizing data usage via differentiable rewards. http://proceedings.mlr.press/v119/wang20p/wang20p.pdf
+    Optimizing data usage via differentiable rewards. 
+    http://proceedings.mlr.press/v119/wang20p/wang20p.pdf
     """
     def __init__(self, eps):
         super(DDS, self).__init__()
