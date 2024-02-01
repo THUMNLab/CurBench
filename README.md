@@ -91,7 +91,7 @@ python examples/base.py
 
 ## Run 
 
-### Example (See run.py)
+### Single Run
 
 ```bash
 # 1. vision standard
@@ -106,7 +106,7 @@ python examples/base.py --data <mutag/proteins/nci1/molhiv> --net <gcn/gat/gin> 
 # Note: Do not use LRE, MW-Net and DDS when backbone model is LSTM, which is not suitable for direct gradient calculation.
 ```
 
-### Batch
+### Batch Run
 ```bash
 python run.py
 ```
