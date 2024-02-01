@@ -77,8 +77,6 @@ def get_metric(data_name):
     data_name = data_name.split('-')[0]
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    # Connect Error: huggingface.co
-    # return evaluate.load('glue', data_name), data_dict[data_name]
     if data_name == 'molhiv':
         return auroc, 'ROC AUC'
     else:

@@ -134,10 +134,10 @@ class BaseTrainer():
         assert dataset_name in trainer_dict, \
             'Assert Error: data_name should be in ' + str(list(trainer_dict.keys()))
 
-        # only allow cbs, coarse_to_fine, local_to_global for image classifier
+        # only allow cbs, lgl, c2f for image classifier
         assert trainer_dict[dataset_name] == ImageClassifier \
-            or not (cl.name == 'cbs' or cl.name == 'local_to_global' or cl.name == 'coarse_to_fine'), \
-            'Assert Error: cbs or local_to_global or coarse_to_fine cannot be applied to text or graph'
+            or not (cl.name == 'cbs' or cl.name == 'lgl' or cl.name == 'c2f'), \
+            'Assert Error: cbs or lgl or c2f cannot be applied to text or graph'
 
         self.trainer = trainer_dict[dataset_name](
             data_name, net_name, gpu_index, num_epochs, random_seed,

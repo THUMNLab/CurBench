@@ -91,17 +91,19 @@ python examples/base.py
 
 ## Run 
 
-### Example
+### Example (See run.py)
 
 ```bash
 # 1. vision standard
-python examples/base.py --data <cifar10/cifar100/imagenet32> --net <lenet/resnet/vit> --gpu <0/1/2/>
+python examples/base.py --data <cifar10/cifar100/tinyimagenet> --net <lenet/resnet18/vit> --gpu <0/1/2/...>
 
 # 2. text standard
-python examples/base.py --data <rte/sst2/cola/> --net <lstm/bert/gpt> --gpu <0/1/2/>
+python examples/base.py --data <rte/sst2/cola/...> --net <lstm/bert/gpt> --gpu <0/1/2/...>
 
 # 3. graph standard
-python examples/base.py --data <nci1/ptc_mr/> --net <gcn/gat/sage> --gpu <0/1/2/>
+python examples/base.py --data <mutag/proteins/nci1/molhiv> --net <gcn/gat/gin> --gpu <0/1/2/...>
+
+# Note: Do not use LRE, MW-Net and DDS when backbone model is LSTM, which is not suitable for direct gradient calculation.
 ```
 
 ### Batch
