@@ -55,7 +55,6 @@ def get_dataset(data_name, tokenizer):
     return raw_dataset, converted_dataset
 
 
-# Connect Error: huggingface.co
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import f1_score, matthews_corrcoef
@@ -107,6 +106,5 @@ def get_metric(data_name):
     data_name = data_name.split('-')[0]
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
-    # Connect Error: huggingface.co
     # return evaluate.load('glue', data_name), data_dict[data_name]
     return GLUEMetric(data_name), data_dict[data_name]
