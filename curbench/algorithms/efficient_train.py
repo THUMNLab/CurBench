@@ -74,7 +74,6 @@ class EfficientTrain(BaseCL):
 
     def data_curriculum(self, **kwargs):
         self.epoch += 1
-        print(self.epoch, (self.epoch - 1) // self.e_list[0], self.b_list[(self.epoch - 1) // self.e_list[0]])
         
         if (self.epoch - 1) % self.e_list[0] == 0:
             ET_index = (self.epoch - 1) // self.e_list[0]
