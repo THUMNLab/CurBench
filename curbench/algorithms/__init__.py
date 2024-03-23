@@ -17,3 +17,4 @@ from .screener_net import ScreenerNet, ScreenerNetTrainer
 from .lre import LRE, LRETrainer
 from .mw_net import MWNet, MWNetTrainer
 from .dds import DDS, DDSTrainer
+from .efficient_train import EfficientTrain, EfficientTrainTrainer

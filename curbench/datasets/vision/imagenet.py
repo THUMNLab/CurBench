@@ -7,7 +7,7 @@ import os
 import pickle
 import numpy as np
 
-from torch.utils.data import Dataset, random_split
+from torch.utils.data import Dataset, Subset
 from torchvision import transforms
 
 
@@ -62,14 +62,21 @@ def get_imagenet_dataset(data_dir='data', valid_ratio=0.1):
     ])
 
     train_dataset = ImageNet(data_dir, train=True, transform=train_transform)
+    valid_dataset = ImageNet(data_dir, train=True, transform=test_transform)
     test_dataset = ImageNet(data_dir, train=False, transform=test_transform)
 
-    num_train = len(train_dataset)
-    num_valid = int(np.floor(valid_ratio * num_train))
-    train_dataset, valid_dataset = random_split(train_dataset, [num_train - num_valid, num_valid])
+    for dataset in [train_dataset, valid_dataset, test_dataset]:
+        dataset.__setattr__('name', 'imagenet')
+        dataset.__setattr__('num_classes', 1000)
+        dataset.__setattr__('image_size', 224)
 
-    test_dataset.__setattr__('name', 'imagenet')
-    test_dataset.__setattr__('num_classes', 1000)
-    test_dataset.__setattr__('image_size', 224)
+    num_train = len(train_dataset)
+    indices = list(range(num_train))
+    split = int(np.floor(valid_ratio * num_train))
+    np.random.shuffle(indices)
+
+    train_idx, valid_idx = indices[split:], indices[:split]
+    train_dataset = Subset(train_dataset, train_idx)
+    valid_dataset = Subset(valid_dataset, valid_idx)
 
     return train_dataset, valid_dataset, test_dataset

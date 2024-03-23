@@ -40,6 +40,11 @@ def get_cifar10_dataset(data_dir='data', valid_ratio=0.1):
         download=True, transform=test_transform,
     )
 
+    for dataset in [train_dataset, valid_dataset, test_dataset]:
+        dataset.__setattr__('name', 'cifar10')
+        dataset.__setattr__('num_classes', 10)
+        dataset.__setattr__('image_size', 32)
+
     num_train = len(train_dataset)
     indices = list(range(num_train))
     split = int(np.floor(valid_ratio * num_train))
@@ -48,8 +53,5 @@ def get_cifar10_dataset(data_dir='data', valid_ratio=0.1):
     train_idx, valid_idx = indices[split:], indices[:split]
     train_dataset = Subset(train_dataset, train_idx)
     valid_dataset = Subset(valid_dataset, valid_idx)
-    test_dataset.__setattr__('name', 'cifar10')
-    test_dataset.__setattr__('num_classes', 10)
-    test_dataset.__setattr__('image_size', 32)
 
     return train_dataset, valid_dataset, test_dataset

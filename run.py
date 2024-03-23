@@ -5,7 +5,7 @@ import math
 ## Image
 methods = ['base', 'spl', 'ttcl', 'mcl', 'screener_net', 'lre', 'mw_net', 
            'dcl', 'lgl', 'dds', 'dihcl', 'superloss', 'cbs', 'c2f', 'adaptive_cl']
-datasets = ['cifar10', 'cifar100', 'tinyimagenet']
+datasets = ['cifar10', 'cifar100', 'tinyimagenet', 'animal10n']
 models = ['lenet', 'resnet18', 'vit']
 settings = ['', '-noise-0.4', '-imbalance-50']
 seeds = [42, 666, 777, 888, 999]

@@ -4,6 +4,7 @@ datasets
 evaluate
 einops
 ogb
+timm
 
 torch
 torchvision
