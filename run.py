@@ -7,7 +7,7 @@ methods = ['base', 'spl', 'ttcl', 'mcl', 'screener_net', 'lre', 'mw_net',
            'dcl', 'lgl', 'dds', 'dihcl', 'superloss', 'cbs', 'c2f', 'adaptive_cl']
 datasets = ['cifar10', 'cifar100', 'tinyimagenet']
 models = ['lenet', 'resnet18', 'vit']
-settings = ['', '-noise-0.4']
+settings = ['', '-noise-0.4', '-imbalance-50']
 seeds = [42, 666, 777, 888, 999]
 epoch = 200
 gpu = 0
@@ -30,7 +30,7 @@ methods = ['base', 'spl', 'ttcl', 'mcl', 'screener_net', 'lre', 'mw_net',
            'dcl', 'dds', 'dihcl', 'superloss', 'adaptive_cl']
 datasets = ['rte', 'mrpc', 'stsb', 'cola', 'sst2', 'qnli', 'qqp', 'mnli']
 models = ['lstm', 'bert', 'gpt']
-settings = ['', '-noise-0.4']
+settings = ['', '-noise-0.4', '-imbalance-50']
 seeds = [42, 666, 777, 888, 999]
 epochs = {'lstm': 10, 'bert': 3, 'gpt': 3}
 gpu = 0
@@ -57,7 +57,7 @@ methods = ['base', 'spl', 'ttcl', 'mcl', 'screener_net', 'lre', 'mw_net',
            'dcl', 'dds', 'dihcl', 'superloss', 'adaptive_cl']
 datasets = ['mutag', 'proteins', 'nci1', 'molhiv']
 models = ['gcn', 'gat', 'gin']
-settings = ['', '-noise-0.4']
+settings = ['', '-noise-0.4', '-imbalance-50']
 seeds = [42, 666, 777, 888, 999]
 epoch = 200
 gpu = 0
