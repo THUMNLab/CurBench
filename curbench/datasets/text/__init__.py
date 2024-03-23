@@ -45,6 +45,19 @@ def get_dataset(data_name, tokenizer):
     else:
         noise_ratio = None
 
+    # imbalance setting
+    if 'imbalance' in data_name:
+        try:
+            parts = data_name.split('-')
+            data_name = parts[0]
+            imbalance_ratio = int(parts[-1])
+        except:
+            assert False, 'Assert Error: data_name shoule be [dataset]-imbalance-[ratio]'
+        assert imbalance_ratio >= 1 and imbalance_ratio <= 200, \
+            'Assert Error: imbalance ratio should be in range of [1, 200]'
+    else:
+        imbalance_ratio = None
+
     # get standard, noisy or imbalanced dataset
     assert data_name in data_dict, 'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
     raw_dataset, converted_dataset = get_glue_dataset(data_name, tokenizer)
@@ -52,9 +65,12 @@ def get_dataset(data_name, tokenizer):
     if noise_ratio:
         label_range = task_text_label_range_map[data_name]
         converted_dataset = LabelNoise(converted_dataset, noise_ratio, label_range, label_int=(data_name != 'stsb'))
+    if imbalance_ratio:
+        converted_dataset = ClassImbalanced(converted_dataset, imbalance_ratio)
     return raw_dataset, converted_dataset
 
 
+# Connect Error: huggingface.co
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import f1_score, matthews_corrcoef
@@ -106,5 +122,6 @@ def get_metric(data_name):
     data_name = data_name.split('-')[0]
     assert data_name in data_dict, \
             'Assert Error: data_name should be in ' + str(list(data_dict.keys()))
+    # Connect Error: huggingface.co
     # return evaluate.load('glue', data_name), data_dict[data_name]
     return GLUEMetric(data_name), data_dict[data_name]

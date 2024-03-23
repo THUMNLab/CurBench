@@ -1,7 +1,6 @@
 from ogb.graphproppred import PygGraphPropPredDataset
 
 
-
 def get_ogb_dataset(data_name, data_dir='data/ogb'):
     if data_name[3] == 'g':     # 'ogbg-'
         dataset = PygGraphPropPredDataset(name=data_name, root=data_dir)

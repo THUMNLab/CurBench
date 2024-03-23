@@ -2,10 +2,12 @@ from transformers import AutoConfig, AutoModelForSequenceClassification
 
 
 def get_transformer(net_name, num_embeddings, num_classes):
-    config = AutoConfig.from_pretrained(net_name, num_labels=num_classes)
-    net = AutoModelForSequenceClassification.from_pretrained(net_name, config=config)
-    # config = AutoConfig.from_pretrained('net/%s' % net_name, num_labels=num_classes)
-    # net = AutoModelForSequenceClassification.from_pretrained('net/%s' % net_name, config=config)
+    # Connect Error: huggingface.co
+    # config = AutoConfig.from_pretrained(net_name, num_labels=num_classes)
+    # net = AutoModelForSequenceClassification.from_pretrained(net_name, config=config)
+    ## net = AutoModelForSequenceClassification.from_config(config=config)
+    config = AutoConfig.from_pretrained('net/%s' % net_name, num_labels=num_classes)
+    net = AutoModelForSequenceClassification.from_pretrained('net/%s' % net_name, config=config)
 
     # Since gpt does not have <PAD>, it needs a new embedding vector
     if 'gpt' in net_name:

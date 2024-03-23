@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import collections
-import datasets
 from datasets import Dataset
 from datasets.arrow_dataset import Dataset as SubDataset
 
@@ -46,7 +45,7 @@ class UtilDataset(SubDataset):
         self.keys = self.dataset[0].keys()
         
     def __getitem__(self, index):
-        res = self.dataset[self.idx[index]]    
+        res = self.dataset[self.idx[index]]
         res['labels'] = self.labels[self.idx[index]]
         return res    
 
@@ -108,39 +107,27 @@ class LabelNoise(Dataset):
 
 
 class ClassImbalanced(Dataset):
-    def __init__(self, dataset, mode='dominant', \
-        dominant_labels=None, dominant_ratio=4, dominant_minor_floor=5,\
-                exp_mu=0.9):
+    def __init__(self, dataset, imbalance_ratio):
         self.dataset = dataset
-        self.mode = mode
-        self.dominant_labels = dominant_labels
-        self.dominant_ratio = dominant_ratio
-        self.dominant_minor_floor = dominant_minor_floor
-        self.exp_mu = exp_mu
+        self.imbalance_ratio = imbalance_ratio
         self.idx = []
-        counter = collections.Counter([self.dataset['train'][i]['labels'].item() for i in range(len(self.dataset['train']))])
-        if self.mode == 'dominant':
-            if not isinstance(self.dominant_labels, list) or len(list(self.dominant_labels)) < 1:
-                raise ValueError("dominant_labels should be a list with at least one element")
-            self.dominant_labels = np.array(self.dominant_labels)
-            nums = np.array([counter[key] for key in sorted(counter.keys())])
-            minor_num = max(self.dominant_minor_floor, int(max(nums[self.dominant_labels]) / self.dominant_ratio))
-            minor_ratio = minor_num * 1.0 / min(nums[~self.dominant_labels])
-            for i, data in enumerate(self.dataset['train']):
-                if (data['labels'].item() not in self.dominant_labels) and (np.random.rand() > minor_ratio):
-                    continue
+        self.labels = []
+        counter = collections.Counter([int(self.dataset['train'][i]['labels'].item()) for i in range(len(self.dataset['train']))])
+
+        label_cnts = [counter[key] for key in sorted(counter.keys())]
+        print('Original label: ', np.array(label_cnts))
+
+        label_cnts = [0 for key in counter.keys()]
+        mu = (1.0 / imbalance_ratio) ** (1.0 / (len(counter.keys()) - 1))
+        for i, data in enumerate(self.dataset['train']):
+            label = data['labels'].item()
+            self.labels.append(torch.tensor(label))
+            if np.random.rand() < (mu ** int(label)) * counter[0] / counter[int(label)]:
+                label_cnts[int(label)] += 1
                 self.idx.append(i)
-        elif self.mode == 'exp':
-            nums = np.array([counter[key] * (exp_mu ** i) for i, key in enumerate(sorted(counter.keys()))])
-            for i, data in enumerate(self.dataset['train']):
-                label = data['labels'].item()
-                if np.random.rand() < (nums[label] * 1.0 / counter[label]):
-                    self.idx.append(i)
-        elif self.mode == 'none':
-            self.idx = list(range(len(self.dataset['train'])))
-        else:
-            raise NotImplementedError()
-        self.train_subdataset = UtilDataset(self.dataset['train'], self.idx, [], False)
+        print('Imbalance label: ', np.array(label_cnts))
+
+        self.train_subdataset = UtilDataset(self.dataset['train'], self.idx, self.labels, False)
                                      
     def __getitem__(self, key):
         if key == 'train':
