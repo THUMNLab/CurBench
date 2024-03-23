@@ -4,41 +4,10 @@ Based on https://github.com/jiweibo/ImageNet/blob/master/data_loader.py
 
 
 import os
-import pickle
 import numpy as np
 
-from torch.utils.data import Dataset, Subset
-from torchvision import transforms
-
-
-class ImageNet(Dataset):
-    def __init__(self, root, train=True, transform=None, target_transform=None):
-        self.root = root
-        self.train = train  # training set or test set
-        self.transform = transform
-        self.target_transform = target_transform
-
-        file_name = 'train_batch' if self.train else 'val_batch'
-        file_path = os.path.join(self.root, 'imagenet-1k', file_name)
-
-        with open(file_path, 'rb') as f:
-            entry = pickle.load(f)
-            self.data = entry['data']
-            self.targets = entry['labels']
-
-    def __getitem__(self, index):
-        img, target = self.data[index], self.targets[index]
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return img, target
-
-    def __len__(self):
-        return len(self.data)
+from torch.utils.data import Subset
+from torchvision import transforms, datasets
 
 
 def get_imagenet_dataset(data_dir='data', valid_ratio=0.1):
@@ -49,7 +18,7 @@ def get_imagenet_dataset(data_dir='data', valid_ratio=0.1):
     STD = [0.229, 0.224, 0.225]
     
     train_transform = transforms.Compose([
-        transforms.RandomCrop(224),
+        transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
@@ -61,9 +30,18 @@ def get_imagenet_dataset(data_dir='data', valid_ratio=0.1):
         transforms.Normalize(MEAN, STD),
     ])
 
-    train_dataset = ImageNet(data_dir, train=True, transform=train_transform)
-    valid_dataset = ImageNet(data_dir, train=True, transform=test_transform)
-    test_dataset = ImageNet(data_dir, train=False, transform=test_transform)
+    train_dataset = datasets.ImageFolder(
+        root=os.path.join(data_dir, 'imagenet-1k', 'train'), 
+        transform=train_transform,
+    )
+    valid_dataset = datasets.ImageFolder(
+        root=os.path.join(data_dir, 'imagenet-1k', 'train'), 
+        transform=test_transform,
+    )
+    test_dataset = datasets.ImageFolder(
+        root=os.path.join(data_dir, 'imagenet-1k', 'val'), 
+        transform=test_transform,
+    )
 
     for dataset in [train_dataset, valid_dataset, test_dataset]:
         dataset.__setattr__('name', 'imagenet')

@@ -75,8 +75,13 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.in_planes = 64
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False,
-                               stride=2 if image_size == 64 else 1)
+        if image_size == 224:
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        else:
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False,
+                                   stride=2 if image_size == 64 else 1)
+            self.maxpool = nn.Identity()
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64,  num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
@@ -93,7 +98,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.maxpool(F.relu(self.bn1(self.conv1(x))))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
