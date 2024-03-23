@@ -2,6 +2,7 @@ from .cifar10 import get_cifar10_dataset
 from .cifar100 import get_cifar100_dataset
 from .imagenet32 import get_imagenet32_dataset
 from .tinyimagenet import get_tinyimagenet_dataset
+from .animal10n import get_animal10n_dataset
 from .utils import LabelNoise, LabelImbalance
 
 
@@ -10,6 +11,7 @@ data_dict = {
     'cifar100': get_cifar100_dataset,
     'imagenet32': get_imagenet32_dataset,
     'tinyimagenet': get_tinyimagenet_dataset,
+    'animal10n': get_animal10n_dataset,
 }
 
 

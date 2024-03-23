@@ -117,6 +117,7 @@ class BaseTrainer():
         """
         trainer_dict = {
             'cifar10': ImageClassifier, 'cifar100': ImageClassifier, 'imagenet32': ImageClassifier, 'tinyimagenet': ImageClassifier,
+            'animal10n': ImageClassifier,
 
             'rte': TextClassifier, 'mrpc': TextClassifier, 'stsb': TextClassifier, 'cola': TextClassifier, 
             'sst2': TextClassifier, 'qnli': TextClassifier, 'qqp': TextClassifier, 'mnli': TextClassifier, 'wnli': TextClassifier,
