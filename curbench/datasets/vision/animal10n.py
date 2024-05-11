@@ -60,7 +60,7 @@ def get_animal10n_dataset(data_dir='data', valid_ratio=0.1):
 
     for dataset in [train_dataset, valid_dataset, test_dataset]:
         dataset.__setattr__('name', 'animal10n')
-        dataset.__setattr__('num_classes', 100)
+        dataset.__setattr__('num_classes', 10)
         dataset.__setattr__('image_size', 64)
 
     num_train = len(train_dataset)
