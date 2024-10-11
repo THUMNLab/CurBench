@@ -2,6 +2,10 @@
 
 A benchmark for Curriculum Learning.
 
+The code of ICML 2024 paper **CurBench: A Curriculum Learning Benchmark**.
+
+The paper can be downloaded from the [official website](https://openreview.net/pdf?id=Htw0bSgjXE) or in the [docs directory](https://github.com/THUMNLab/CurBench/tree/master/docs).
+
 
 ## Environment
 
@@ -109,4 +113,27 @@ python examples/base.py --data <mutag/proteins/nci1/molhiv> --net <gcn/gat/gin> 
 ### Batch Run
 ```bash
 python run.py
+```
+
+## Cite
+
+Please cite our paper as follows if you find our code useful:
+
+```
+@inproceedings{zhoucurbench,
+  title={CurBench: Curriculum Learning Benchmark},
+  author={Zhou, Yuwei and Pan, Zirui and Wang, Xin and Chen, Hong and Li, Haoyang and Huang, Yanwen and Xiong, Zhixiao and Xiong, Fangzhou and Xu, Peiyang and Zhu, Wenwu and others},
+  booktitle={Forty-first International Conference on Machine Learning}
+}
+```
+
+You may also find our [survey paper](https://arxiv.org/pdf/2010.13166.pdf) helpful:
+```
+@article{wang2021survey,
+  title={A survey on curriculum learning},
+  author={Wang, Xin and Chen, Yudong and Zhu, Wenwu},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2021},
+  publisher={IEEE}
+}
 ```
