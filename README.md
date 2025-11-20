@@ -6,6 +6,8 @@ The code of ICML 2024 paper **CurBench: A Curriculum Learning Benchmark**.
 
 The paper can be downloaded from the [official website](https://openreview.net/pdf?id=Htw0bSgjXE) or in the [docs directory](https://github.com/THUMNLab/CurBench/tree/master/docs).
 
+This repository is the updated and extended version of our curriculum learning framework.
+The earlier version is available at [CurML](https://github.com/THUMNLab/CurML).
 
 ## Demo
 ![demo](docs/demo-cl.gif)
