@@ -7,6 +7,10 @@ The code of ICML 2024 paper **CurBench: A Curriculum Learning Benchmark**.
 The paper can be downloaded from the [official website](https://openreview.net/pdf?id=Htw0bSgjXE) or in the [docs directory](https://github.com/THUMNLab/CurBench/tree/master/docs).
 
 
+## Demo
+![demo](docs/demo-cl.gif)
+
+
 ## Environment
 
 1. python >= 3.7  
