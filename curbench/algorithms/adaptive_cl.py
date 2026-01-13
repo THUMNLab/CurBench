@@ -56,7 +56,7 @@ class AdaptiveCL(BaseCL):
         data_sort = torch.argsort(self.difficulty)
         self.data_indice = data_sort[0 : self.epoch_size].detach().cpu().numpy().tolist()
         dataset = Subset(self.dataset, self.data_indice)
-        dataloader = self._dataloader(dataset, shuffle=False)
+        dataloader = self._dataloader(dataset)
 
         if self.epoch % self.inv == 0:
             self._difficulty_measurer()
@@ -87,8 +87,9 @@ class AdaptiveCL(BaseCL):
     def _set_initial_difficulty(self):
     
         self.pretrained_model.eval()
+        loader = self._dataloader(self.dataset, shuffle=False)
         with torch.no_grad():
-            for step, data in enumerate(self.dataloader):
+            for step, data in enumerate(loader):
                 if isinstance(data, list):
                     inputs = data[0].to(self.device)
                     labels = data[1].to(self.device)
@@ -113,7 +114,8 @@ class AdaptiveCL(BaseCL):
     
         current_difficulty = torch.Tensor().to(self.device)
 
-        for step, data in enumerate(self.dataloader):
+        loader = self._dataloader(self.dataset, shuffle=False)
+        for step, data in enumerate(loader):
             with torch.no_grad():
                 if isinstance(data, list):
                     inputs = data[0].to(self.device)
