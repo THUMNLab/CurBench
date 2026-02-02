@@ -71,20 +71,20 @@ class DCL(BaseCL):
 
         if self.init_data_param and self.init_class_param:
             sigma = torch.exp(data_weights) + torch.exp(class_weights)
-            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
-                + (0.5 * self.wd_data_param * data_weights ** 2).sum()      \
-                + (0.5 * self.wd_class_param * class_weights ** 2).sum()
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels).mean()    \
+                 + (0.5 * self.wd_data_param * data_weights ** 2).sum()          \
+                 + (0.5 * self.wd_class_param * class_weights ** 2).sum()
         elif self.init_data_param:
             sigma = torch.exp(data_weights)
-            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
-                + (0.5 * self.wd_data_param * data_weights ** 2).sum()
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels).mean()    \
+                 + (0.5 * self.wd_data_param * data_weights ** 2).sum()
         elif self.init_class_param:
             sigma = torch.exp(class_weights)
-            loss = self.criterion(outputs / sigma.view(-1, 1), labels)      \
-                + (0.5 * self.wd_class_param * class_weights ** 2).sum()
+            loss = self.criterion(outputs / sigma.view(-1, 1), labels).mean()     \
+                 + (0.5 * self.wd_class_param * class_weights ** 2).sum()
         else:
-            loss = self.criterion(outputs, labels)
-        return torch.mean(loss)
+            loss = self.criterion(outputs, labels).mean()
+        return loss
 
 
 class DCLTrainer(BaseTrainer):
